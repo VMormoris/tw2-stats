@@ -150,7 +150,7 @@ function updateDetails(details)
     document.getElementById('vills').innerHTML = format(details.villages);
     document.getElementById('avg-vill-points').innerText = format(parseInt(details.points/details.villages));
     document.getElementById('tchanges').innerText = format(details.tchanges);
-    document.getElementById('dconquers').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'conquers\')">' + format(details.conquers.all) + '</a>(<a href="javascript:void(0);" onclick="changeView(\'conquers\', \'gains\')">+' + format(details.conquers.gains) + ', <a href="javascript:void(0);" onclick="changeView(\'conquers\', \'losses\')">-' + format(details.conquers.losses) + '</a>) <a>Internally: </a><a href="javascript:void(0);" onclick="(\'conquers\',\'internals\')">' + format(details.conquers.internals) + '</a>'; 
+    document.getElementById('dconquers').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'conquers\')">' + format(details.conquers.all) + '</a>(<a href="javascript:void(0);" onclick="changeView(\'conquers\', \'gains\')">+' + format(details.conquers.gains) + ', <a href="javascript:void(0);" onclick="changeView(\'conquers\', \'losses\')">-' + format(details.conquers.losses) + '</a>) <a>Internally: </a><a href="javascript:void(0);" onclick="changeView(\'conquers\',\'internals\')">' + format(details.conquers.internals) + '</a>'; 
     document.getElementById('offbash').innerText = format(details.offbash);
     document.getElementById('defbash').innerText = format(details.defbash);
     document.getElementById('totalbash').innerText = format(details.totalbash);

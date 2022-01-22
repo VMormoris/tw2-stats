@@ -93,8 +93,8 @@ function update(obj)
             'tag': row.tag,
             'members': memberstr,
             'points': format(row.points),
-            'defbash': format(row.defbash),
             'offbash': format(row.offbash),
+            'defbash': format(row.defbash),
             'totalbash': format(row.totalbash),
             'vp': format(row.vp)
         });

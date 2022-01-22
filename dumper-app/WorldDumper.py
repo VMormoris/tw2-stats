@@ -117,6 +117,7 @@ class WorldDumper:
         with open('.cache/'+ self.__world +'.token', 'w') as file:
             file.write(token)
         self.__client.setEmitToken(token)
+        time.sleep(0.7)
         self.__client.emit('Map/getVillagesByArea', { 'x': self.__startX, 'y': self.__startY, 'width': 50, 'height': 50, 'character_id': self.__player_id }, self.__onvillages)
     
     def __onvillages(self, obj):
@@ -134,9 +135,10 @@ class WorldDumper:
         for village in villages:
             self.__data['villages'].append(village)
         self.__left_areas -= 1
-        if self.__left_areas == 0:#All villages on map have been searched
+        if self.__left_areas == 0 or obj['data']['y'] >= 1000:#All villages on map have been searched
             print('Done with villages')
             self.__command = { 'type': 'Ranking/getTribeRanking', 'offset': 0 }
+            time.sleep(0.7)
             self.__client.emit('Ranking/getTribeRanking', { 'area_id': None, 'area_type': 'world', 'count': 150, 'offset': 0, 'order_by': 'rank', 'order_dir': 0, 'query': '' }, self.__ontribes)
         else:
             (x, y) = (obj['data']['x'] + 50, obj['data']['y'])
@@ -144,6 +146,7 @@ class WorldDumper:
             if x >= self.__endX:
                 (x, y) = (self.__startX, y + 50)
             self.__command = { 'type': 'Map/getVillagesByArea', 'data': {'x': x, 'y': y}}
+            time.sleep(0.7)
             self.__client.emit('Map/getVillagesByArea', { 'x': x, 'y': y, 'width': 50, 'height': 50, 'character_id': self.__player_id }, self.__onvillages)
 
     def __ontribes(self, obj):
@@ -161,13 +164,15 @@ class WorldDumper:
         offset = obj['data']['offset']
         for tribe in tribes:
             self.__data['tribes'].append(tribe)
-        if len(self.__data['tribes']) == total:
+        if len(self.__data['tribes']) >= total:
             print('Done with tribes')
             self.__command = { 'type': 'Ranking/getCharacterRanking', 'offset': 0 }
+            time.sleep(0.7)
             self.__client.emit('Ranking/getCharacterRanking', { 'area_id': None, 'area_type': 'world', 'count': 150, 'offset': 0, 'order_by': 'rank', 'order_dir': 0, 'query': ''}, self.__onplayers)
         else:
             print('Tribes offset:', offset)
             self.__command = { 'type': 'Ranking/getTribeRanking', 'offset': offset + 150 }
+            time.sleep(0.7)
             self.__client.emit('Ranking/getTribeRanking', { 'area_id': None, 'area_type': 'world', 'count': 150, 'offset': offset + 150, 'order_by': 'rank', 'order_dir': 0, 'query': '' }, self.__ontribes)
 
     def __onplayers(self, obj):
@@ -183,12 +188,13 @@ class WorldDumper:
         offset = obj['data']['offset']
         for player in players:
             self.__data['players'].append(player)
-        if len(self.__data['players']) == total:
+        if len(self.__data['players']) >= total:
             print('Finish with players')
             self.__finish()
         else:
             print('Players offset:', offset)
             self.__command = { 'type': 'Ranking/getCharacterRanking', 'offset': offset + 150 }
+            time.sleep(0.7)
             self.__client.emit('Ranking/getCharacterRanking', { 'area_id': None, 'area_type': 'world', 'count': 150, 'offset': offset + 150, 'order_by': 'rank', 'order_dir': 0, 'query': ''}, self.__onplayers)
     
     def __finish(self):

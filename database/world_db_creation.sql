@@ -162,11 +162,15 @@ CREATE TABLE villages_history
 CREATE INDEX pnname_index ON players("nname");
 
 --On villages table
-CREATE INDEX vname_index ON villages("name");
+--CREATE INDEX vname_index ON villages("name");
 CREATE INDEX vnname_index ON villages("nname");
 --On conquest_history table
-CREATE INDEX vhname_index ON villages_history("name");
+--CREATE INDEX vhname_index ON villages_history("name");
 CREATE INDEX vhnname_index ON villages_history("nname");
+CREATE INDEX oldowner_index ON villages_history("prevpid");
+CREATE INDEX newowner_index ON villages_history("nextpid");
+CREATE INDEX oldtribe_index ON villages_history("prevtid");
+CREATE INDEX newtribe_index ON villages_history("nexttid");
 
 /* -------- Dummy tribe for players not in tribe -------- */
 INSERT INTO tribes
