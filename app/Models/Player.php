@@ -15,8 +15,6 @@ class Player extends Model
      */
     public $timestamps = false;
 
-    protected $fillable = array('id', 'name', 'nname', 'tid', 'villages', 'points', 'ppv', 'offbash', 'defbash', 'totalbash', 'rankno', 'vp', 'timestamp');
-
     /**
      * Gets player's history (One to Many Relationship between Player and PlayerHistory)
      * @return HasMany Relationship betweem Player and Players' History

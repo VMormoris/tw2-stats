@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Conquer;
 use App\Models\Player;
 use App\Models\PlayerHistory;
 use App\Models\Village;
 use App\Models\VillageHistory;
+use App\Models\TribeChange;
+
 
 /**
  * Class for handling player logic on our app
@@ -66,9 +69,9 @@ class PlayerService
             ->where('players.id', '=', $id)->get()[0];
         
         //Extra information
-        $player['tchanges'] = PlayerHistory::on($world)->where('pid', '=', $id)->whereColumn('prevtid', '!=', 'nexttid')->count();
-        $losses = VillageHistory::on($world)->where('prevpid', '=', $id)->where('nextpid', '!=', $id)->where('nextpid', '!=', 0)->count();
-        $gains = VillageHistory::on($world)->where('prevpid', '!=', $id)->where('nextpid', '=', $id)->count();
+        $player['tchanges'] = TribeChange::on($world)->where('pid', '=', $id)->whereColumn('prevtid', '!=', 'nexttid')->count();
+        $losses = Conquer::on($world)->where('prevpid', '=', $id)->where('nextpid', '!=', $id)->where('nextpid', '!=', 0)->count();
+        $gains = Conquer::on($world)->where('prevpid', '!=', $id)->where('nextpid', '=', $id)->count();
         $player['conquers'] = array('losses' => $losses, 'gains' => $gains);
 
         //Get history data for graphs
@@ -109,14 +112,14 @@ class PlayerService
     {
         //"Prepare" query for player's history
         $history = PlayerHistory::on($world)->select(
-            'players_history.nexttid', 'tribes.name AS new tribe',
+            'players_history.tid', 'tribes.name AS new tribe',
             'players_history.villages',
             'players_history.points',
             'players_history.offbash', 'players_history.defbash', 'players_history.totalbash',
             'players_history.rankno',
             'players_history.vp',
             'players_history.timestamp' 
-        )->join('tribes', 'tribes.id', '=', 'players_history.nexttid')
+        )->join('tribes', 'tribes.id', '=', 'players_history.tid')
             ->where('players_history.pid', '=', $id)
             ->orderBy('players_history.timestamp', 'DESC');
         
@@ -190,30 +193,30 @@ class PlayerService
     private function all(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" conquers query
-        $conquers = VillageHistory::on($world)->select(
-            'villages_history.vid',
-            'villages_history.name',
+        $conquers = Conquer::on($world)->select(
+            'conquers.vid',
+            'conquers.name',
             'villages.x', 'villages.y',
-            'villages_history.prevpid', 'pl1.name AS old owner',
-            'villages_history.nextpid', 'pl2.name AS new owner',
-            'villages_history.points',
-            'villages_history.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'villages_history.prevpid')
-            ->join('players AS pl2', 'pl2.id', '=', 'villages_history.nextpid')
-            ->join('villages', 'villages.id', '=', 'villages_history.vid')
-            ->where('villages_history.nextpid', '!=', 0)
+            'conquers.prevpid', 'pl1.name AS old owner',
+            'conquers.nextpid', 'pl2.name AS new owner',
+            'conquers.points',
+            'conquers.timestamp'
+        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
+            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
+            ->join('villages', 'villages.id', '=', 'conquers.vid')
+            ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
-                $query->where('villages_history.nname', 'like', $filter)
+                $query->where('conquers.nname', 'like', $filter)
                 ->orWhere('pl1.nname', 'like', $filter)
                 ->orWhere('pl2.nname', 'like', $filter);
             })
-            ->whereColumn('villages_history.prevpid', '!=', 'villages_history.nextpid')
+            ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where(function($query) use ($id){
-                $query->where('villages_history.nextpid', '=', $id)
-                    ->orWhere('villages_history.prevpid', '=', $id);
+                $query->where('conquers.nextpid', '=', $id)
+                    ->orWhere('conquers.prevpid', '=', $id);
             })
-            ->orderBy('villages_history.timestamp', 'DESC')
-            ->orderBy('villages_history.id', 'ASC');
+            ->orderBy('conquers.timestamp', 'DESC')
+            ->orderBy('conquers.id', 'ASC');
         
         //Execute queries
         $count = $conquers->count();
@@ -234,26 +237,26 @@ class PlayerService
     private function losses(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" losses query
-        $losses = VillageHistory::on($world)->select(
-            'villages_history.vid',
-            'villages_history.name',
+        $losses = Conquer::on($world)->select(
+            'conquers.vid',
+            'conquers.name',
             'villages.x', 'villages.y',
-            'villages_history.prevpid',
-            'villages_history.nextpid', 'players.name AS new owner',
-            'villages_history.points',
-            'villages_history.timestamp'
-        )->join('players', 'players.id', '=', 'villages_history.nextpid')
-            ->join('villages', 'villages.id', '=', 'villages_history.vid')
-            ->where('villages_history.nextpid', '!=', 0)
+            'conquers.prevpid',
+            'conquers.nextpid', 'players.name AS new owner',
+            'conquers.points',
+            'conquers.timestamp'
+        )->join('players', 'players.id', '=', 'conquers.nextpid')
+            ->join('villages', 'villages.id', '=', 'conquers.vid')
+            ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
-                $query->where('villages_history.nname', 'like', $filter)
+                $query->where('conquers.nname', 'like', $filter)
                     ->orWhere('players.nname', 'like', $filter);
             })
-            ->where('villages_history.prevpid', '=', $id)
-            ->where('villages_history.nextpid', '!=', $id)
-            ->where('villages_history.nextpid', '!=', 0)
-            ->orderBy('villages_history.timestamp', 'DESC')
-            ->orderBy('villages_history.id', 'ASC');
+            ->where('conquers.prevpid', '=', $id)
+            ->where('conquers.nextpid', '!=', $id)
+            ->where('conquers.nextpid', '!=', 0)
+            ->orderBy('conquers.timestamp', 'DESC')
+            ->orderBy('conquers.id', 'ASC');
         
         //Executre queries
         $count = $losses->count();
@@ -274,24 +277,24 @@ class PlayerService
     private function gains(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" gains query
-        $gains = VillageHistory::on($world)->select(
-            'villages_history.vid',
-            'villages_history.name',
+        $gains = Conquer::on($world)->select(
+            'conquers.vid',
+            'conquers.name',
             'villages.x', 'villages.y',
-            'villages_history.prevpid', 'players.name AS old owner',
-            'villages_history.nextpid',
-            'villages_history.points',
-            'villages_history.timestamp'
-        )->join('players', 'players.id', '=', 'villages_history.prevpid')
-            ->join('villages', 'villages.id', '=', 'villages_history.vid')
+            'conquers.prevpid', 'players.name AS old owner',
+            'conquers.nextpid',
+            'conquers.points',
+            'conquers.timestamp'
+        )->join('players', 'players.id', '=', 'conquers.prevpid')
+            ->join('villages', 'villages.id', '=', 'conquers.vid')
             ->where(function($query) use ($filter){
-                $query->where('villages_history.nname', 'like', $filter)
+                $query->where('conquers.nname', 'like', $filter)
                     ->orWhere('players.nname', 'like', $filter);
             })
-            ->where('villages_history.prevpid', '!=', $id)
+            ->where('conquers.prevpid', '!=', $id)
             ->where('villages_history.nextpid', '=', $id)
-            ->orderBy('villages_history.timestamp', 'DESC')
-            ->orderBy('villages_history.id', 'ASC');
+            ->orderBy('conquers.timestamp', 'DESC')
+            ->orderBy('conquers.id', 'ASC');
         
         //Execute queries
         $count = $gains->count();

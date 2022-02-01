@@ -6,14 +6,14 @@ import time
 PASSWORD = '<your_password>'
 
 upsert_tribes = '''
-INSERT INTO tribes(id, name, nname, tag, active, members, points, ppm, ppv, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
-VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+INSERT INTO tribes(id, name, nname, tag, active, members, points, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (id) DO UPDATE SET
     id = %s,
     name = %s, nname = %s, tag = %s,
     active = %s,
     members = %s,
-    points = %s, ppm = %s, ppv = %s,
+    points = %s,
     offbash = %s, defbash = %s, totalbash = %s,
     rankno = %s,
     villages = %s,
@@ -22,14 +22,14 @@ ON CONFLICT (id) DO UPDATE SET
 '''
 
 upsert_players = '''
-INSERT INTO players(id, name, nname, tid, villages, points, ppv, offbash, defbash, totalbash, rankno, vp, timestamp)
-VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+INSERT INTO players(id, name, nname, tid, villages, points, offbash, defbash, totalbash, rankno, vp, timestamp)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (id) DO UPDATE SET
     id = %s,
     name = %s, nname = %s,
     tid = %s,
     villages = %s,
-    points = %s, ppv = %s,
+    points = %s,
     offbash = %s, defbash = %s, totalbash = %s,
     rankno = %s,
     vp = %s,
@@ -214,8 +214,8 @@ class WorldDumper:
         cur.execute(query)
         for tribe in tribes:
             params = (
-                tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['points_per_member'], tribe['points_per_villages'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp,
-                tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['points_per_member'], tribe['points_per_villages'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp
+                tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp,
+                tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp
             )
             cur.execute(upsert_tribes, params)
 
@@ -225,8 +225,8 @@ class WorldDumper:
             if player['tribe_id']:
                 tid = player['tribe_id']
             params = (
-                player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['points_per_villages'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp,
-                player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['points_per_villages'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp
+                player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp,
+                player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp
             )
             cur.execute(upsert_players, params)
         
@@ -249,3 +249,11 @@ class WorldDumper:
         conn.close()
         print('Done updating database')
 
+        #Recluster database
+        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='127.0.0.1', password=PASSWORD)
+        conn.set_isolation_level(pgdb.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cur = conn.cursor()
+        cur.execute('CLUSTER;')
+        conn.commit()
+        cur.close()
+        conn.close()

@@ -27,15 +27,10 @@ class PlayerHistory extends Model
     public function player() { return $this->belongsTo(Player::class, 'pid'); }
 
     /**
-     * Player's previous tribe
+     * Player's tribe
      * @return Tribe A tribe record
      */
-    public function previous_tribe() { return $this->belongsTo(Tribe::class, 'prevtid'); }
-    
-    /**
-     * Player's next tribe
-     * @return Tribe A tribe record
-     */
-    public function next_tribe() { return $this->belongsTo(Tribe::class, 'nexttid'); }
+    public function tribe() { return $this->belongsTo(Tribe::class, 'tid'); }
+
 
 }

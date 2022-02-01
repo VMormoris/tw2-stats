@@ -2,6 +2,7 @@ from time import sleep
 from WorldDumper import WorldDumper
 import json
 import os
+import time
 
 MIN = 60.0
 HOUR = 60.0 * MIN
@@ -32,4 +33,7 @@ if __name__ == '__main__':
                 'world': world['world']
             })
             dumper.start()
-        sleep(HOUR)
+        now = time.mktime(time.strptime(time.strftime('%Y-%m-%d %H:00:00', time.gmtime()), '%Y-%m-%d %H:00:00'))
+        next = now + HOUR + 10 * MIN
+        stime = next - time.mktime(time.gmtime())
+        sleep(stime)

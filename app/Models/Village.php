@@ -15,8 +15,6 @@ class Village extends Model
      */
     public $timestamps = false;
 
-    protected $fillable = array('id', 'name', 'nname', 'pid', 'tid', 'x', 'y', 'points', 'provname', 'timestamp');
-
     /**
      * Gets village's history (One to Many Relationship between Village and VillageHistory)
      * @return HasMany Relationship betweem Village and Villages' History

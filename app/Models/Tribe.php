@@ -15,8 +15,6 @@ class Tribe extends Model
      */
     public $timestamps = false;
 
-    protected $fillable = array('id', 'name', 'nname', 'tag', 'active', 'members', 'points', 'ppm', 'ppv', 'offbash', 'defbash', 'totalbash', 'rankno', 'villages', 'vp', 'timestamp');
-
     /**
      * Gets tribe's members (One to Many Relationship between Tribe and Players)
      * @return HasMany Relationship betweem Tribe and Players
