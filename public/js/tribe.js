@@ -509,14 +509,38 @@ function updateHistory(obj)
         else
             vpstr += 'text-warning">(=' + format(offsets.vp) + ')</a>';
 
+        let offbashstr = '<a>' + format(row.offbash) + '</a><a class="';
+        if(offsets.offbash>0)
+            offbashstr += 'text-success">(+' + format(offsets.offbash) + ')</a>';
+        else if(offsets.offbash<0)
+            offbashstr += 'text-danger">(' + format(offsets.offbash) + ')</a>';
+        else
+            offbashstr += 'text-warning">(=' + format(offsets.offbash) + ')</a>';
+
+        let defbashstr = '<a>' + format(row.defbash) + '</a><a class="';
+        if(offsets.defbash>0)
+            defbashstr += 'text-success">(+' + format(offsets.defbash) + ')</a>';
+        else if(offsets.defbash<0)
+            defbashstr += 'text-danger">(' + format(offsets.defbash) + ')</a>';
+        else
+            defbashstr += 'text-warning">(=' + format(offsets.defbash) + ')</a>';
+
+        let totalbashstr = '<a>' + format(row.totalbash) + '</a><a class="';
+        if(offsets.totalbash>0)
+            totalbashstr += 'text-success">(+' + format(offsets.totalbash) + ')</a>';
+        else if(offsets.totalbash<0)
+            totalbashstr += 'text-danger">(' + format(offsets.totalbash) + ')</a>';
+        else
+            totalbashstr += 'text-warning">(=' + format(offsets.totalbash) + ')</a>';
+
         data.rows.push({
             'id': offset + i,
             'members': memberstr,
             'villages': villstr,
             'points': pointstr,
-            'offbash': '<a>' + format(row.offbash) + '</a><a class="' + (offsets.offbash > 0 ? 'text-success">(+' : 'text-warning">(=') + format(offsets.offbash) + ')</a>',
-            'defbash': '<a>' + format(row.defbash) + '</a><a class="' + (offsets.defbash > 0 ? 'text-success">(+' : 'text-warning">(=') + format(offsets.defbash) + ')</a>',
-            'totalbash': '<a>' + format(row.totalbash) + '</a><a class="' + (offsets.totalbash > 0 ? 'text-success">(+' : 'text-warning">(=') + format(offsets.totalbash) + ')</a>',
+            'offbash': offbashstr,
+            'defbash': defbashstr,
+            'totalbash': totalbashstr,
             'rankno': format(row.rankno),
             'vp': vpstr,
             'timestamp': row.timestamp
