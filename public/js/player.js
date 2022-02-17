@@ -563,7 +563,7 @@ function updateHistory(obj)
 
         tdata.rows.push({
             '#': format(offset + i),
-            'new tribe': '<a href="/' + world + '/tribe?id=' + row.nexttid + '">' + row['new tribe'] + '</a>',
+            'new tribe': '<a href="/' + world + '/tribe?id=' + row.tid + '">' + row['new tribe'] + '</a>',
             'villages': villstr,
             'points': pointstr,
             'offbash': '<a>' + format(row.offbash) + '</a><a class="' + (offsets.offbash > 0 ? 'text-success">(+' : 'text-warning">(=') + format(offsets.offbash) + ')</a>',

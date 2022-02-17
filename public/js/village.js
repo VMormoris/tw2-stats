@@ -303,7 +303,7 @@ function updateHistory(obj)
         tdata.rows.push({
             '#': format(offset + i),
             'name': name,
-            'owner': row.nextpid == 0 ? row['owner'] : '<a href="/' + world + '/player?id=' + row.nextpid + '">' + row.owner + '</a>',
+            'owner': row.pid == 0 ? row['owner'] : '<a href="/' + world + '/player?id=' + row.pid + '">' + row.owner + '</a>',
             'points': pointstr,
             'timestamp': row.timestamp
         });

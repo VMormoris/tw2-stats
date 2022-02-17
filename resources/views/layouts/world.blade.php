@@ -44,7 +44,7 @@
         @yield('content')
         <footer class="footer mt-auto py-3 bg-dark">
             <div class="container">
-                <a style="color: white">© 2022 Copyright: tw2-stats</a>
+                <a style="color: white">Copyright © 2022  tw2-stats</a>
             </div>
         </footer>
 
