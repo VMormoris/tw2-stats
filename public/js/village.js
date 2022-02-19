@@ -1,5 +1,5 @@
 const endpoint = 'village';
-const data = { overview: null, history: null, conquers: {}};
+const data = { overview: null, history: null, conquers: null };
 
 let village_id = 0;
 let village_name = '';
