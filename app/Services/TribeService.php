@@ -211,6 +211,41 @@ class TribeService
     }
 
     /**
+     * Getter for member changes
+     * @param string $world Name of the world we are intrested
+     * @param int $id Tribe's id
+     * @param int $offset Number of records that will be skipped
+     * @param int $items Number of records that will be returned
+     * @return array json object containing members "history"
+     */
+    public function changes(string $world, int $id, int $offset, int $items)
+    {
+        //"Prepare" query for tribe's changes
+        $changes = TribeChange::on($world)->select(
+            'tribe_changes.pid', 'pl.name AS player',
+            'tribe_changes.prevtid', 'tr1.name AS old tribe',
+            'tribe_changes.nexttid', 'tr2.name AS new tribe',
+            'tribe_changes.villages',
+            'tribe_changes.points',
+            'tribe_changes.offbash', 'tribe_changes.defbash', 'tribe_changes.totalbash',
+            'tribe_changes.rankno',
+            'tribe_changes.vp',
+            'tribe_changes.timestamp'
+        )->join('players AS pl', 'tribe_changes.pid', '=', 'pl.id')
+            ->join('tribes AS tr1', 'tribe_changes.prevtid', '=', 'tr1.id')
+            ->join('tribes AS tr2', 'tribe_changes.nexttid', '=', 'tr2.id')
+            ->where('tribe_changes.prevtid', '=', $id)
+            ->orWhere('tribe_changes.nexttid', '=', $id)
+            ->orderBy('tribe_changes.timestamp', 'DESC');
+        
+        //Execute queries
+        $count = $changes->count();
+        $changes = $changes->skip($offset)->take($items)->get();
+
+        return array('total' => $count, 'data'=> $changes);
+    }
+
+    /**
      * Getter for a subset of tribes's villages
      * @param string $world Name of the world we are intrested
      * @param int $id Tribes's id

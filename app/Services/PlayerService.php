@@ -6,7 +6,6 @@ use App\Models\Conquer;
 use App\Models\Player;
 use App\Models\PlayerHistory;
 use App\Models\Village;
-use App\Models\VillageHistory;
 use App\Models\TribeChange;
 
 
@@ -301,6 +300,38 @@ class PlayerService
         $gains = $gains->skip($offset)->take($items)->get();
 
         return array('gains' => array('total' => $count, 'data' => $gains));
+    }
+
+    /**
+     * Getter for tribe changes
+     * @param string $world Name of the world we are intrested
+     * @param int $id Player's id
+     * @param int $offset Number of records that will be skipped
+     * @param int $items Number of records that will be returned
+     * @return array json object containing Tribe Change's of players
+     */
+    public function changes(string $world, int $id, int $offset, int $items)
+    {
+        //"Prepare" tribe changes query
+        $changes = TribeChange::on($world)->select(
+            'tribe_changes.prevtid', 'tr1.name AS old tribe',
+            'tribe_changes.nexttid', 'tr2.name AS new tribe',
+            'tribe_changes.villages',
+            'tribe_changes.points',
+            'tribe_changes.offbash', 'tribe_changes.defbash', 'tribe_changes.totalbash',
+            'tribe_changes.rankno',
+            'tribe_changes.vp',
+            'tribe_changes.timestamp'
+        )->join('tribes AS tr1', 'tribe_changes.prevtid', '=', 'tr1.id')
+            ->join('tribes AS tr2', 'tribe_changes.nexttid', '=', 'tr2.id')
+            ->where('tribe_changes.pid', '=', $id)
+            ->orderBy('tribe_changes.timestamp', 'DESC');
+        
+        //Execute queries
+        $count = $changes->count();
+        $changes = $changes->skip($offset)->take($items)->get();
+
+        return array('total' => $count, 'data' => $changes);
     }
 
     /**

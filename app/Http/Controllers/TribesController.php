@@ -75,6 +75,8 @@ class TribesController extends Controller
             return $this->service->conquers($world, $id, $show, $filter, $offset, $items);
         else if($view == 'members')
             return $this->service->members($world, $id, $filter, $offset, $items);
+        else if($view == 'changes')
+            return $this->service->changes($world, $id, $offset, $items);
         //else if($view == 'villages')
         //    return $this->service->villages($world, $id, $filter, $offset, $items);
         else if($view == 'name')
