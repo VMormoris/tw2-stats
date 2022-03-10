@@ -292,7 +292,7 @@ class PlayerService
                     ->orWhere('players.nname', 'like', $filter);
             })
             ->where('conquers.prevpid', '!=', $id)
-            ->where('villages_history.nextpid', '=', $id)
+            ->where('conquers.nextpid', '=', $id)
             ->orderBy('conquers.timestamp', 'DESC')
             ->orderBy('conquers.id', 'ASC');
         

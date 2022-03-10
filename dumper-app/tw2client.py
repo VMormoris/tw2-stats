@@ -1,3 +1,4 @@
+from sqlite3 import connect
 from typing import Callable
 import socketio
 import time
@@ -56,9 +57,17 @@ class tw2Client:
         Parameters: 
             url (str): String containing the url of the specified server
         '''
+        flag = False
         self.__url = url
-        self.__sio.connect(url, transports = ["websocket", "polling", "polling-jsonp", "polling-xhr"])
-    
+        try:
+            self.__sio.connect(url, transports = ["websocket", "polling", "polling-jsonp", "polling-xhr"])
+            flag = True
+        except socketio.exceptions.ConnectionError:
+            time.sleep(60.0)
+        finally:
+            if not flag:
+                self.connect(url)
+
     def disconnect(self):
         '''Disconects from the server that was last connected to
         '''
