@@ -1,6 +1,6 @@
 //Data to be loaded depending on which sub page you are
 const endpoint = 'player';
-const data = { overview: null, history: null, conquers: {}, villages: null };
+const data = { overview: null, history: null, conquers: {}, villages: null, changes: null };
 let player_id = 0;
 let player_name = '';
 let view = '';
@@ -11,6 +11,8 @@ let world = '';
 let villagesTable = null;
 let historyTable = null;
 let conquersTable = null;
+let changesTable = null;
+
 var onload = function()
 {
     const url = document.location.href;
@@ -64,6 +66,14 @@ var onload = function()
         'onItemsChange': conquersChangeItems,
         'onPageChange': conquersChangePage,
         'onFilterChange': conquersChangeFilter
+    });
+
+    const changesctx = document.getElementById('changesTable');
+    changesTable = new Table(changesctx, {
+        'ipp': changesItems,
+        'page': changesPage,
+        'onItemsChange': changesChangeItems,
+        'onPageChange': changesChangePage
     });
 
     const reqobj = build_url_params();
@@ -138,7 +148,12 @@ function updateView(obj)
         updateVillages(data.villages);
         document.getElementById('villages').style.display = 'inherit';
     }
-    
+    else if(view == 'changes')
+    {
+        data.changes = obj;
+        updateChanges(data.changes);
+        document.getElementById('changes').style.display = 'inherit';
+    }
 }
 
 /**
@@ -158,7 +173,7 @@ function updateDetails(details)
     document.getElementById('points').innerText = format(details.points);
     document.getElementById('vills').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'villages\')">' + format(details.villages) + '</a>';
     document.getElementById('avg-vill-points').innerText = format(parseInt(details.points/details.villages));
-    document.getElementById('tchanges').innerText = format(details.tchanges);
+    document.getElementById('tchanges').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'changes\')">' + format(details.tchanges) + '</a>'; 
     document.getElementById('dconquers').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'conquers\')">' + format(details.conquers.losses + details.conquers.gains) + '</a>(<a href="javascript:void(0);" onclick="changeView(\'conquers\', \'gains\')">+' + format(details.conquers.gains) + ', <a href="javascript:void(0);" onclick="changeView(\'conquers\', \'losses\')">-' + format(details.conquers.losses) + '</a>)'; 
     document.getElementById('offbash').innerText = format(details.offbash);
     document.getElementById('defbash').innerText = format(details.defbash);
@@ -431,9 +446,9 @@ function build_url_params()
 
 
 /* ------- Function for updating leaderboard like tables  ------- */
-let page = 1, villPage = 1, historyPage = 1;
+let page = 1, villPage = 1, historyPage = 1, changesPage = 1;
 let filter = '', villFilter = '';
-let items = 12, villItems = 12, historyItems = 12;
+let items = 12, villItems = 12, historyItems = 12, changesItems = 1;
 const conquers =
 {
     show: '',
@@ -653,4 +668,58 @@ function updateConquers(obj)
         });
     }
     conquersTable.update(tdata);
+}
+
+function changesChangeItems(newitems)
+{
+    if(changesItems != newitems)
+    {
+        items = newitems, changesItems = newitems;
+        conquersChangePage(1);
+    }
+}
+
+function changesChangePage(newpage)
+{
+    page = newpage;
+    const prop = show == '' ? 'allPage' : show + 'Page'; 
+    changesPage = newpage;
+    const reqobj = build_url_params();
+    GET('/api/' + world + '/player', reqobj, updateChanges);
+}
+
+function updateChanges(obj)
+{
+    data.changes = obj;
+    const tdata = {
+        'page': changesPage,
+        'total': obj.total,
+        'rows': []
+    };
+
+    const rows = obj.data;
+    const offset = (changesPage - 1) * changesItems + 1;
+    for(let i = 0; i < rows.length; i++)
+    {
+        const row = rows[i];
+
+        const oldtribe = row.prevtid == 0 ? row['old tribe'] :  '<a href="/' + world + '/tribe?id=' + row.prevtid + '">' + row['old tribe'] + '</a>';
+        const newtribe = row.nexttid == 0 ? row['new tribe'] :  '<a href="/' + world + '/tribe?id=' + row.nexttid + '">' + row['new tribe'] + '</a>';
+        
+        tdata.rows.push({
+            '#': offset + i,
+            'old tribe': oldtribe,
+            'new tribe': newtribe,
+            'villages': format(row['villages']),
+            'points': format(row['points']),
+            'offbash': format(row.offbash),
+            'defbash': format(row.defbash),
+            'totalbash': format(row.totalbash),
+            'rankno': format(row.rankno),
+            'vp': format(row.vp),
+            'timestamp': row.timestamp
+        });
+    }
+    console.log(tdata);
+    changesTable.update(tdata);
 }

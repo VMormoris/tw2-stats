@@ -26,6 +26,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('villages')">Villages</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Tribe changes</a></li>
         </ol>
     </nav>
 
@@ -141,6 +142,7 @@
             <li class="breadcrumb-item active" aria-current="page">History</li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('villages')">Villages</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Tribe changes</a></li>
         </ol>
     </nav>
 
@@ -212,6 +214,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item active" aria-current="page">Conquers</li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('villages')">Villages</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Tribe changes</a></li>
         </ol>
     </nav>
 
@@ -294,6 +297,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
             <li class="breadcrumb-item active" aria-current="page">Villages</li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Tribe changes</a></li>
         </ol>
     </nav>
 
@@ -340,6 +344,78 @@
                         <th scope="col">y</th>
                         <th scope="col">points</th>
                         <th scope="col">province</th>
+                    </tr>
+                </thead>
+                
+                <tbody class="table-contents">
+                </tbody>
+
+            </table>
+
+            <nav aria-label="...">
+                <ul class="pagination justify-content-end pages">
+                </ul>
+            </nav>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="container subpage-container" id="changes">
+
+    <nav class="mt-5" style="--bs-breadcrumb-divider: '';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('villages')">Villages</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tribe changes</li>
+        </ol>
+    </nav>
+
+    <div class="text-center mt-2">
+        <h1 id="changes-title">Tribe changes</h1>
+    </div>
+
+    <div id="changesTable">
+        
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col">
+                    <div>
+                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp12" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="vpp12">12</label>
+            
+                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp25" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="vpp25">25</label>
+            
+                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp50" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="vpp50">50</label>
+            
+                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp100" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="vpp100">100</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default mt-1 rounded">
+            <table class="table rounded">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">old tribe</th>
+                        <th scope="col">new tribe</th>
+                        <th scope="col">villages</th>
+                        <th scope="col">points</th>
+                        <th scope="col">offbash</th>
+                        <th scope="col">defbash</th>
+                        <th scope="col">totalbash</th>
+                        <th scope="col">rankno</th>
+                        <th scope="col">vp</th>
+                        <th scope="col">timestamp</th>
                     </tr>
                 </thead>
                 
