@@ -385,17 +385,17 @@
             <div class="row">
                 <div class="col">
                     <div>
-                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp12" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="vpp12">12</label>
+                        <input type="radio" class="btn-check ipp" name="changes-per-page" id="xpp12" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="xpp12">12</label>
             
-                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp25" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="vpp25">25</label>
+                        <input type="radio" class="btn-check ipp" name="changes-per-page" id="xpp25" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="xpp25">25</label>
             
-                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp50" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="vpp50">50</label>
+                        <input type="radio" class="btn-check ipp" name="changes-per-page" id="xpp50" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="xpp50">50</label>
             
-                        <input type="radio" class="btn-check ipp" name="villages-per-page" id="vpp100" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="vpp100">100</label>
+                        <input type="radio" class="btn-check ipp" name="changes-per-page" id="xpp100" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="xpp100">100</label>
                     </div>
                 </div>
             </div>

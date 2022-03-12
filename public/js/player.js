@@ -85,6 +85,7 @@ var onload = function()
         document.getElementById('history-title').innerText = player_name + '\'s History';
         document.getElementById('conquers-title').innerText = player_name + '\'s Conquers';
         document.getElementById('villages-title').innerText = player_name + '\'s Villages';
+        document.getElementById('changes-title').innerText = player_name + "'s Tribe changes";
     });
     GET('/api/' + world + '/player', reqobj, updateView);
 }
@@ -105,9 +106,10 @@ function changeView(newview, newshow = '')
     const prop = view == '' ? 'overview' : view;
     
     if(view == 'history') { page = historyPage, items = historyItems; }
-    else if(view == 'conquers') { page = conquers[showprop+'Page'], items = conquers.items; }
-    else if(view == 'villages') { page = villPage, items = villItems; }
-    
+    else if(view == 'conquers') { page = conquers[showprop+'Page'], items = conquers.items, filter = conquers.filter; }
+    else if(view == 'villages') { page = villPage, items = villItems, filter = villFilter; }
+    else if(view == 'changes') { page = changesPage, items = changesItems; }
+
     const reqobj = build_url_params();
     if(data[prop] == null)//Load view data from server
         GET('/api/' + world + '/player', reqobj, updateView);
@@ -448,7 +450,7 @@ function build_url_params()
 /* ------- Function for updating leaderboard like tables  ------- */
 let page = 1, villPage = 1, historyPage = 1, changesPage = 1;
 let filter = '', villFilter = '';
-let items = 12, villItems = 12, historyItems = 12, changesItems = 1;
+let items = 12, villItems = 12, historyItems = 12, changesItems = 12;
 const conquers =
 {
     show: '',
@@ -675,7 +677,7 @@ function changesChangeItems(newitems)
     if(changesItems != newitems)
     {
         items = newitems, changesItems = newitems;
-        conquersChangePage(1);
+        changesChangePage(1);
     }
 }
 
@@ -703,8 +705,8 @@ function updateChanges(obj)
     {
         const row = rows[i];
 
-        const oldtribe = row.prevtid == 0 ? row['old tribe'] :  '<a href="/' + world + '/tribe?id=' + row.prevtid + '">' + row['old tribe'] + '</a>';
-        const newtribe = row.nexttid == 0 ? row['new tribe'] :  '<a href="/' + world + '/tribe?id=' + row.nexttid + '">' + row['new tribe'] + '</a>';
+        const oldtribe = row.prevtid == 0 ? row['old tribe'] : '<a href="/' + world + '/tribe?id=' + row.prevtid + '">' + row['old tribe'] + '</a>';
+        const newtribe = row.nexttid == 0 ? row['new tribe'] : '<a href="/' + world + '/tribe?id=' + row.nexttid + '">' + row['new tribe'] + '</a>';
         
         tdata.rows.push({
             '#': offset + i,

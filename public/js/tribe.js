@@ -1,5 +1,5 @@
 const endpoint = 'tribe';
-const data = {overview: null, history: null, conquers: {}, members: null, villages: null};
+const data = {overview: null, history: null, conquers: {}, members: null, villages: null, changes: null };
 let tribe_id = 0;
 let tribe_name = '';
 let view = '';
@@ -9,6 +9,8 @@ let world = '';
 let historyTable = null;
 let conquersTable = null;
 let membersTable = null;
+let changesTable = null;
+
 var onload = function()
 {
     const url = document.location.href;
@@ -64,6 +66,14 @@ var onload = function()
         'onFilterChange': membersChangeFilter,
     });
 
+    const changesctx = document.getElementById('changesTable');
+    changesTable = new Table(changesctx, {
+        'ipp': changesItems,
+        'page': changesPage,
+        'onItemsChange': changesChangeItems,
+        'onPageChange': changesChangePage,
+    });
+
     const reqobj = build_url_params();
     GET('/api/' + world + '/tribe', { id: tribe_id, 'view': 'name'}, (obj) =>
     {
@@ -72,6 +82,7 @@ var onload = function()
         document.getElementById('history-title').innerText = tribe_name + '\'s History';
         document.getElementById('conquers-title').innerText = tribe_name + '\'s Conquers';
         document.getElementById('members-title').innerText = tribe_name + "'s Members";
+        document.getElementById('changes-title').innerText = tribe_name + "'s Member changes";
     });
     GET('/api/' + world + '/tribe', reqobj, updateView);
 }
@@ -92,8 +103,9 @@ function changeView(newview, newshow = '')
     const prop = view == '' ? 'overview' : view;
     
     if(view == 'history') { page = historyPage, items = historyItems; }
-    else if(view == 'conquers') { page = conquers[showprop+'Page'], items = conquers.items; }
-    else if(view == 'villages') { page = villPage, items = villItems; }
+    else if(view == 'conquers') { page = conquers[showprop+'Page'], items = conquers.items, filter = conquers.filter; }
+    else if(view == 'members') { page = membersPage, items = membersItems, filter = membersFilter;}
+    else if(view == 'changes') { page = changesPage, items = changesItems; }
 
     const reqobj = build_url_params();
     if(data[prop] == null)//Load view data from server
@@ -132,6 +144,12 @@ function updateView(obj)
         updateMembers(data.members);
         document.getElementById('members').style.display = 'inherit';
     }
+    else if(view == 'changes')
+    {
+        data.changes = obj;
+        updateChanges(data.changes);
+        document.getElementById('changes').style.display = 'inherit';
+    }
 }
 
 /**
@@ -149,7 +167,7 @@ function updateDetails(details)
     document.getElementById('avg-member-points').innerText = format(parseInt(details.points/details.members));
     document.getElementById('vills').innerHTML = format(details.villages);
     document.getElementById('avg-vill-points').innerText = format(parseInt(details.points/details.villages));
-    document.getElementById('tchanges').innerText = format(details.tchanges);
+    document.getElementById('tchanges').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'changes\')">' + format(details.tchanges) + '</a>'; 
     document.getElementById('dconquers').innerHTML = '<a href="javascript:void(0);" onclick="changeView(\'conquers\')">' + format(details.conquers.all) + '</a>(<a href="javascript:void(0);" onclick="changeView(\'conquers\', \'gains\')">+' + format(details.conquers.gains) + ', <a href="javascript:void(0);" onclick="changeView(\'conquers\', \'losses\')">-' + format(details.conquers.losses) + '</a>) <a>Internally: </a><a href="javascript:void(0);" onclick="changeView(\'conquers\',\'internals\')">' + format(details.conquers.internals) + '</a>'; 
     document.getElementById('offbash').innerText = format(details.offbash);
     document.getElementById('defbash').innerText = format(details.defbash);
@@ -421,9 +439,9 @@ function build_url_params()
 }
 
 /* ------- Function for updating leaderboard like tables  ------- */
-let page = 1, villPage = 1, historyPage = 1, membersPage = 1;
-let filter = '', villFilter = '', membersFilter = '';
-let items = 12, villItems = 12, historyItems = 12, membersItems = 12;
+let page = 1, historyPage = 1, membersPage = 1, changesPage = 1;
+let filter = '', membersFilter = '';
+let items = 12, historyItems = 12, membersItems = 12, changesItems = 12;
 const conquers =
 {
     show: '',
@@ -684,4 +702,58 @@ function updateMembers(obj)
         });
     } 
     membersTable.update(tdata);
+}
+
+function changesChangeItems(newitems)
+{
+    if(changesItems != newitems)
+    {
+        items = newitems, changesItems = newitems;
+        changesChangePage(1);
+    }
+}
+
+function changesChangePage(newpage)
+{
+    page = newpage;
+    const prop = show == '' ? 'allPage' : show + 'Page'; 
+    changesPage = newpage;
+    const reqobj = build_url_params();
+    GET('/api/' + world + '/tribe', reqobj, updateChanges);
+}
+
+function updateChanges(obj)
+{
+    data.changes = obj;
+    const tdata = {
+        'page': changesPage,
+        'total': obj.total,
+        'rows': []
+    };
+
+    const rows = obj.data;
+    const offset = (changesPage - 1) * changesItems + 1;
+    for(let i = 0; i < rows.length; i++)
+    {
+        const row = rows[i];
+
+        const playername = row.pid == 0 ? row['player'] : '<a href="/' + world + '/player?id=' + row.pid + '">' + row['player'] + '</a>';
+        const action = row.nexttid == tribe_id ? '<b><a class="text-success">join</a></b>' : '<b><a class="text-danger">left</a></b>';
+        
+        tdata.rows.push({
+            '#': offset + i,
+            'player': playername,
+            'action': action,
+            'villages': format(row['villages']),
+            'points': format(row['points']),
+            'offbash': format(row.offbash),
+            'defbash': format(row.defbash),
+            'totalbash': format(row.totalbash),
+            'rankno': format(row.rankno),
+            'vp': format(row.vp),
+            'timestamp': row.timestamp
+        });
+    }
+    console.log(tdata);
+    changesTable.update(tdata);
 }
