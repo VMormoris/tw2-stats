@@ -24,7 +24,6 @@
         this.#page = settings['page'];
         this.#onItemsChange = settings['onItemsChange'];
         this.#onPageChange = settings['onPageChange'];
-        console.log(this.#onItemsChange);
         const itemsButtons = this.#ctx.getElementsByClassName('ipp');
         for(let i = 0; i < itemsButtons.length; i++)
         {

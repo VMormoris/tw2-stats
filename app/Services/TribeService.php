@@ -11,6 +11,8 @@ use App\Models\TribeChange;
 use App\Models\Village;
 use App\Models\VillageHistory;
 
+use Illuminate\Support\Facades\DB;
+
 /**
  * Class for handling tribe logic on our app
  */
@@ -454,6 +456,288 @@ class TribeService
         $changes = $changes->skip($offset)->take($items)->get();
 
         return array('total' => $count, 'data'=> $changes);
+    }
+
+    /**
+     * Getter for conquers stats
+     * @param string $world Name of the world we intrested
+     * @param int $id Tribe's id
+     * @param string $spec Specification for the stats we are intrested
+     * @return array json object containing stats
+     */
+    public function stats(string $world, int $id, string $spec)
+    {
+        if($spec == 'tvt_gains')
+            return $this->tvt_gains($world, $id);
+        else if($spec == 'tvt_losses')
+            return $this->tvt_losses($world, $id);
+        else if($spec == 'tvp_gains')
+            return $this->tvp_gains($world, $id);
+        else if($spec == 'tvp_losses')
+            return $this->tvp_losses($world, $id);
+        else
+            return array('error' => 'Use of unrecognized stats specification');
+    }
+
+    /**
+     * Getter for Tribe VS Tribe gains stats
+     * @param string $world Name of the world we intrested
+     * @param int $id Tribe's id
+     * @return array json object containing stats
+     */
+    private function tvt_gains(string $world, int $id)
+    {
+        /**
+         * Actual query we want to execute:
+         *   WITH tvt_gains AS
+         *   (
+         *       SELECT
+         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
+         *          prevtid AS "tid",
+         *          COUNT(*) AS "gains"
+         *       FROM conquers
+         *       WHERE nexttid = $id
+         *       GROUP BY prevtid
+         *       ORDER BY "gains" DESC
+         *   )
+         *   SELECT tvt_gains."num", tr.name AS "name", tvt_gains."gains" FROM tvt_gains
+         *   INNER JOIN tribes AS tr ON tr.id = tvt_gains."tid"
+         *   WHERE num BETWEEN 1 AND 6
+         *   UNION
+         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM tvt_gains WHERE num > 6
+         *   ORDER BY "num";
+         */
+
+        $tvt_gains = Conquer::on($world)->select(
+            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+            'prevtid AS tid',
+            DB::connection($world)->raw('COUNT(*) AS gains')
+        )->where('nexttid', '=', $id)
+            ->groupBy('prevtid')
+            ->orderBy('gains', 'DESC');
+
+        $best6 = DB::connection($world)->table('tvt_gains')
+        ->select(
+            'tvt_gains.num AS num',
+            'tr.name AS name',
+            'tvt_gains.gains AS gains'
+        )->withExpression('tvt_gains', $tvt_gains)
+            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->whereBetween('num', [1, 6]);
+        
+        $total = $best6->count();
+        if($total<=6)
+            $result = $best6->orderBy('num');
+        else
+        {
+            $result = DB::connection($world)->table('tvt_gains')
+                ->select(
+                    DB::connection($world)->raw('
+                        7 AS num,
+                        \'Other\' AS name,
+                        SUM(tvt_gains.gains) AS gains
+                    ')
+                )->withExpression('tvt_gains', $tvt_gains)
+                    ->where('num', '>', 6)
+                    ->union($best6)
+                    ->orderBy('num');
+        }
+
+        return array('tvt_gains' => $result->get());
+    }
+
+    /**
+     * Getter for Tribe VS Tribe losses stats
+     * @param string $world Name of the world we intrested
+     * @param int $id Tribe's id
+     * @return array json object containing stats
+     */
+    private function tvt_losses(string $world, int $id)
+    {
+        /**
+         * Actual query we want to execute:
+         *   WITH tvt_losses AS
+         *   (
+         *       SELECT
+         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
+         *          nexttid AS "tid",
+         *          COUNT(*) AS "losses"
+         *       FROM conquers
+         *       WHERE prevtid = $id
+         *       GROUP BY nexttid
+         *       ORDER BY "losses" DESC
+         *   )
+         *   SELECT tvt_losses."num", tr.name AS "name", tvt_losses."losses" FROM tvt_losses
+         *   INNER JOIN tribes AS tr ON tr.id = tvt_losses."tid"
+         *   WHERE num BETWEEN 1 AND 6
+         *   UNION
+         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM tvt_losses WHERE num > 6
+         *   ORDER BY "num";
+         */
+
+        $tvt_losses = Conquer::on($world)->select(
+            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+            'nexttid AS tid',
+            DB::connection($world)->raw('COUNT(*) AS losses')
+        )->where('prevtid', '=', $id)
+            ->groupBy('nexttid')
+            ->orderBy('losses', 'DESC');
+
+        $best6 = DB::connection($world)->table('tvt_losses')
+        ->select(
+            'tvt_losses.num AS num',
+            'tr.name AS name',
+            'tvt_losses.losses AS losses'
+        )->withExpression('tvt_losses', $tvt_losses)
+            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->whereBetween('num', [1, 6]);
+        
+        $total = $best6->count();
+        if($total<=6)
+            $result = $best6->orderBy('num');
+        else
+        {
+            $result = DB::connection($world)->table('tvt_losses')
+                ->select(
+                    DB::connection($world)->raw('
+                        7 AS num,
+                        \'Other\' AS name,
+                        SUM(tvt_losses.losses) AS losses
+                    ')
+                )->withExpression('tvt_losses', $tvt_losses)
+                    ->where('num', '>', 6)
+                    ->union($best6)
+                    ->orderBy('num');
+        }        
+        return array('tvt_losses' => $result->get());
+    }
+
+    /**
+     * Getter for Tribe VS Player gains stats
+     * @param string $world Name of the world we intrested
+     * @param int $id Tribe's id
+     * @return array json object containing stats
+     */
+    private function tvp_gains(string $world, int $id)
+    {
+        /**
+         * Actual query we want to execute:
+         * WITH tvp_gains AS
+         *   (
+         *       SELECT
+         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
+         *           prevpid AS "pid",
+         *           COUNT(*) AS "gains"
+         *       WHERE nexttid = $id
+         *       GROUP BY prevpid
+         *       ORDER BY "gains" DESC
+         *   )
+         *   SELECT tvp_gains."num", pl.name AS "name", tvp_gains."gains" FROM tvp_gains
+         *   INNER JOIN players AS pl ON pl.id = tvp_gains."pid"
+         *   WHERE num BETWEEN 1 AND 6
+         *   UNION
+         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM tvp_gains WHERE num > 6
+         *   ORDER BY "num";
+         */
+        
+        $tvp_gains = Conquer::on($world)->select(
+            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+            'prevpid AS pid',
+            DB::connection($world)->raw('COUNT(*) AS gains')
+        )->where('nexttid', '=', $id)
+            ->groupBy('prevpid')
+            ->orderBy('gains', 'DESC');
+
+        $best6 = DB::connection($world)->table('tvp_gains')
+            ->select(
+                'tvp_gains.num AS num',
+                'pl.name AS name',
+                'tvp_gains.gains AS gains'
+            )->withExpression('tvp_gains', $tvp_gains)
+                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->whereBetween('num', [1, 6]);
+        
+        $total = $best6->count();
+        if($total<=6)
+            $result = $best6->orderBy('num');
+        else
+        {
+            $result = DB::connection($world)->table('tvp_gains')
+                ->select(
+                    DB::connection($world)->raw('
+                        7 AS num,
+                        \'Other\' AS name,
+                        SUM(tvp_gains.gains) AS gains
+                    ')
+                )->withExpression('tvp_gains', $tvp_gains)
+                    ->where('num', '>', 6)
+                    ->union($best6)
+                    ->orderBy('num');
+        }
+        return array('tvp_gains' => $result->get());
+    }
+    /**
+     * Getter for Tribe VS Player losses stats
+     * @param string $world Name of the world we intrested
+     * @param int $id Tribe's id
+     * @return array json object containing stats
+     */
+    private function tvp_losses(string $world, int $id)
+    {
+        /**
+         * Actual query we want to execute:
+         * WITH tvp_losses AS
+         *   (
+         *       SELECT
+         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
+         *           nextpid AS "pid",
+         *           COUNT(*) AS "losses"
+         *       WHERE prevtid = $id
+         *       GROUP BY nextpid
+         *       ORDER BY "losses" DESC
+         *   )
+         *   SELECT tvp_losses."num" AS "num", pl.name AS "name", tvp_losses."losses" FROM tvp_losses
+         *   INNER JOIN players AS pl ON pl.id = tvp_losses."pid"
+         *   WHERE "num" BETWEEN 1 AND 6
+         *   UNION
+         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM tvp_losses WHERE num > 6
+         *   ORDER BY "num";
+         */
+
+        $tvp_losses = Conquer::on($world)->select(
+            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+            'nextpid AS pid',
+            DB::connection($world)->raw('COUNT(*) AS losses')
+        )->where('prevtid', '=', $id)
+            ->groupBy('nextpid')
+            ->orderBy('losses', 'DESC');
+        
+        $best6 = DB::connection($world)->table('tvp_losses')
+            ->select(
+                'tvp_losses.num AS num',
+                'pl.name AS name',
+                'tvp_losses.losses AS losses'
+            )->withExpression('tvp_losses', $tvp_losses)
+                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->whereBetween('num', [1, 6]);
+        $total = $best6->count();
+        if($total<=6)
+            $result = $best6->orderBy('num');
+        else
+        {
+            $result = DB::connection($world)->table('tvp_losses')
+                ->select(
+                    DB::connection($world)->raw('
+                        7 AS num,
+                        \'Other\' AS name,
+                        SUM(tvp_losses.losses) AS losses
+                    ')
+                )->withExpression('tvp_losses', $tvp_losses)
+                    ->where('num', '>', 6)
+                    ->union($best6)
+                    ->orderBy('num');
+        }
+        return array('tvp_losses' => $result->get());
     }
 
     /**

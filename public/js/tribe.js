@@ -1,5 +1,5 @@
 const endpoint = 'tribe';
-const data = {overview: null, history: null, conquers: {}, members: null, villages: null, changes: null };
+const data = {overview: null, history: null, conquers: {}, stats: null, members: null, villages: null, changes: null };
 let tribe_id = 0;
 let tribe_name = '';
 let view = '';
@@ -79,12 +79,23 @@ var onload = function()
     {
         tribe_name = obj['name']; 
         document.getElementById('overview-title').innerText = tribe_name + "'s Overview";
-        document.getElementById('history-title').innerText = tribe_name + '\'s History';
-        document.getElementById('conquers-title').innerText = tribe_name + '\'s Conquers';
+        document.getElementById('history-title').innerText = tribe_name + "'s History";
+        document.getElementById('conquers-title').innerText = tribe_name + "'s Conquers";
+        document.getElementById('stats-title').innerText = tribe_name + "'s Conquer stats";
         document.getElementById('members-title').innerText = tribe_name + "'s Members";
         document.getElementById('changes-title').innerText = tribe_name + "'s Member changes";
     });
-    GET('/api/' + world + '/tribe', reqobj, updateView);
+    
+    if(reqobj['view'] == 'stats')
+    {
+        data.stats = {};
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvt_gains'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvt_losses'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvp_gains'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvp_losses'}, updateView);
+    }
+    else
+        GET('/api/' + world + '/tribe', reqobj, updateView);
 }
 
 /**
@@ -108,7 +119,15 @@ function changeView(newview, newshow = '')
     else if(view == 'changes') { page = changesPage, items = changesItems; }
 
     const reqobj = build_url_params();
-    if(data[prop] == null)//Load view data from server
+    if(prop == 'stats' && data[prop] == null)
+    {
+        data.stats = {};
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvt_gains'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvt_losses'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvp_gains'}, updateView);
+        GET('/api/' + world + '/tribe', {'id': tribe_id, 'view': 'stats', 'spec': 'tvp_losses'}, updateView);
+    }
+    else if(data[prop] == null)//Load view data from server
         GET('/api/' + world + '/tribe', reqobj, updateView);
     else if(prop == 'conquers' && data[prop][showprop] == null)
         GET('/api/' + world + '/tribe', reqobj, updateView);
@@ -137,6 +156,15 @@ function updateView(obj)
             data.conquers[prop] = obj[prop];
         updateConquers(data.conquers);
         document.getElementById('conquers').style.display = 'inherit';
+    }
+    else if(view == 'stats')
+    {
+        for(const prop in obj)//Only one prop each time
+        {
+            data.stats[prop] = obj[prop];
+            updateStats(obj);
+        }
+        document.getElementById('stats').style.display = 'inherit';
     }
     else if(view == 'members')
     {
@@ -326,6 +354,68 @@ function updateGraphs(history)
             }
         );
     }
+}
+
+function updateStats(obj)
+{
+    //Constant pie color palette
+    const colorpalette = ['rgb(255, 99, 132)', 'rgb(255, 159, 64)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)', 'rgb(54, 162, 235)', 'rgb(153, 102, 255)', 'rgb(201, 203, 207)']
+    
+    //Get's "metadata"
+    let prop = null;
+    for(const property in obj)//Only one property
+        prop = property;
+    const subprop = prop.substring(4);
+
+    const tdata = obj[prop];
+    let total = 0;
+    for(let i = 0; i < tdata.length; i++)
+        total += parseInt(tdata[i][subprop]);
+    //Set table's title
+    document.getElementById(prop + '_title').innerText += ' (' + total + ' total)';
+
+    //Data to filled during for loop
+    const labels = [];//Labels for pie chart
+    const datapoints = [];//Data for pie chart
+    const colors = [];//Background colors for pie chart
+
+    //Set table's content
+    const tablectx = document.getElementById(prop);
+    const table = tablectx.getElementsByClassName('table-contents')[0];
+    table.innerHTML = '';
+
+    for(let i = 0; i < tdata.length; i++)
+    {
+        const row = tdata[i];
+        table.innerHTML += '<tr><th scope="col">' + row['num'] + '</th>\n' +
+            '<td>' + row['name'] + '</td>\n' +
+            '<td>' + row[subprop] + '</td>\n' +
+            '<td>' + format(row[subprop] / total * 100) + '%</td>\n</tr>';
+        
+        //Fill data to use in pie later
+        labels.push(row['name']);
+        datapoints.push(row[subprop]);
+        colors.push(colorpalette[i]);
+    }
+
+    //Setup pie
+    const piectx = document.getElementById(prop+'_pie');
+    const piegraph = new Chart(piectx, {
+        'type': 'pie',
+        'data':
+        {
+            'labels': labels,
+            'datasets':
+            [{
+                'data': datapoints,
+                'backgroundColor': colors
+            }]
+        },
+        'options': { 'responsive': true, 'plugins': { 'legend': { 'position': 'top' } } },
+        'actions':
+        {
+        }
+    });
 }
 
 function parse_extra_params(params)

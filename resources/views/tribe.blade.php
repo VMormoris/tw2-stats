@@ -24,6 +24,7 @@
             <li class="breadcrumb-item active" aria-current="page">Overview</li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('stats')">Conquer stats</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
         </ol>
@@ -146,6 +147,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
             <li class="breadcrumb-item active" aria-current="page">History</li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('stats')">Conquer stats</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
         </ol>
@@ -218,6 +220,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item active" aria-current="page">Conquers</li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('stats')">Conquer stats</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
         </ol>
@@ -299,6 +302,137 @@
 
 </div>
 
+<div class="container subpage-container" id="stats">
+    
+    <nav class="mt-5" style="--bs-breadcrumb-divider: '';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Conquer stats</li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
+        </ol>
+    </nav>
+
+    <div class="text-center mt-2">
+        <h1 id="stats-title">Conquer stats</h1>
+    </div>
+
+    <div class="d-flex flex-row">
+
+        <div class="container" style="width: 50%">
+            <div class="text-center mt-2">
+                <h2 id="tvt_gains_title">Gains from Tribes</h2>
+            </div>
+
+            <table id="tvt_gains" class="table rounded">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">tribe</th>
+                        <th scope="col">gains</th>
+                        <th scope="col">percentage</th>
+                    </tr>
+                </thead>
+                <tbody class="table-contents">
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container" style="width: 50%">
+            <canvas id="tvt_gains_pie" style="max-height: 400px;"></canvas>
+        </div>
+
+    </div>
+
+    <div class="d-flex flex-row">
+
+        <div class="container" style="width: 50%">
+            <div class="text-center mt-2">
+                <h2 id="tvt_losses_title">Losses from Tribes</h2>
+            </div>
+
+            <table id="tvt_losses" class="table rounded">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">tribe</th>
+                        <th scope="col">losses</th>
+                        <th scope="col">percentage</th>
+                    </tr>
+                </thead>
+                <tbody class="table-contents">
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container" style="width: 50%">
+            <canvas id="tvt_losses_pie" style="max-height: 400px;"></canvas>
+        </div>
+
+    </div>
+
+    <div class="d-flex flex-row">
+
+        <div class="container" style="width: 50%">
+            <div class="text-center mt-2">
+                <h2 id="tvp_gains_title">Gains from Players</h2>
+            </div>
+
+            <table id="tvp_gains" class="table rounded">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">player</th>
+                        <th scope="col">gains</th>
+                        <th scope="col">percentage</th>
+                    </tr>
+                </thead>
+                <tbody class="table-contents">
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container" style="width: 50%">
+            <canvas id="tvp_gains_pie" style="max-height: 400px;"></canvas>
+        </div>
+
+    </div>
+
+    <div class="d-flex flex-row">
+
+        <div class="container" style="width: 50%">
+            <div class="text-center mt-2">
+                <h2 id="tvp_losses_title">Losses from Players</h2>
+            </div>
+
+            <table id="tvp_losses" class="table rounded">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">player</th>
+                        <th scope="col">losses</th>
+                        <th scope="col">percentage</th>
+                    </tr>
+                </thead>
+                <tbody class="table-contents">
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container" style="width: 50%">
+            <canvas id="tvp_losses_pie" style="max-height: 400px;"></canvas>
+        </div>
+
+    </div>
+
+</div>
+
 <div class="container subpage-container" id="members">
 
     <nav class="mt-5" style="--bs-breadcrumb-divider: '';" aria-label="breadcrumb">
@@ -306,6 +440,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('stats')">Conquer stats</a></li>
             <li class="breadcrumb-item active" aria-current="page">Members</li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
         </ol>
@@ -382,6 +517,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('')">Overview</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('stats')">Conquer stats</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
             <li class="breadcrumb-item active" aria-current="page">Member changes</li>
         </ol>
