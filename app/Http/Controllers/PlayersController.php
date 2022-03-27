@@ -65,6 +65,7 @@ class PlayersController extends Controller
         $show = $req->input('show', 'all');
         $filter = $req->input('filter', '');
         $items = $req->input('items', 12);
+        $spec = $req->input('spec', 'pvt_gains');
         
         //Transforms inputs
         $filter = '%' . $filter . '%';
@@ -81,6 +82,8 @@ class PlayersController extends Controller
             return $this->service->villages($world, $id, $filter, $offset, $items);
         else if($view == 'changes')
             return $this->service->changes($world, $id, $offset, $items);
+        else if($view == 'stats')
+            return $this->service->stats($world, $id, $spec);
         else if($view == 'name')
             return $this->service->name($world, $id);
         else

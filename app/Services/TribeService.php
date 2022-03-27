@@ -459,7 +459,7 @@ class TribeService
     }
 
     /**
-     * Getter for conquers stats
+     * Getter for tribe's conquers stats
      * @param string $world Name of the world we intrested
      * @param int $id Tribe's id
      * @param string $spec Specification for the stats we are intrested
@@ -676,6 +676,7 @@ class TribeService
         }
         return array('tvp_gains' => $result->get());
     }
+    
     /**
      * Getter for Tribe VS Player losses stats
      * @param string $world Name of the world we intrested
