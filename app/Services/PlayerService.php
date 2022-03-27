@@ -70,8 +70,8 @@ class PlayerService
         
         //Extra information
         $player['tchanges'] = TribeChange::on($world)->where('pid', '=', $id)->whereColumn('prevtid', '!=', 'nexttid')->count();
-        $losses = Conquer::on($world)->where('prevpid', '=', $id)->where('nextpid', '!=', $id)->where('nextpid', '!=', 0)->count();
-        $gains = Conquer::on($world)->where('prevpid', '!=', $id)->where('nextpid', '=', $id)->count();
+        $losses = Conquer::on($world)->where('prevpid', '=', $id)->count();
+        $gains = Conquer::on($world)->where('nextpid', '=', $id)->count();
         $player['conquers'] = array('losses' => $losses, 'gains' => $gains);
 
         //Get history data for graphs
@@ -402,7 +402,7 @@ class PlayerService
             ->join('tribes AS tr', 'tr.id', '=', 'tid')
             ->whereBetween('num', [1, 6]);
         
-        $total = $best6->count();
+        $total = DB::connection($world)->table('pvt_gains')->withExpression('pvt_gains', $pvt_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
@@ -469,8 +469,8 @@ class PlayerService
             ->join('tribes AS tr', 'tr.id', '=', 'tid')
             ->whereBetween('num', [1, 6]);
         
-        $total = $best6->count();
-        if($total<=6)
+            $total = DB::connection($world)->table('pvt_losses')->withExpression('pvt_losses', $pvt_losses)->count();
+            if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
@@ -534,7 +534,7 @@ class PlayerService
                 ->join('players AS pl', 'pl.id', '=', 'pid')
                 ->whereBetween('num', [1, 6]);
         
-        $total = $best6->count();
+        $total = DB::connection($world)->table('pvp_gains')->withExpression('pvp_gains', $pvp_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
@@ -598,7 +598,8 @@ class PlayerService
             )->withExpression('pvp_losses', $pvp_losses)
                 ->join('players AS pl', 'pl.id', '=', 'pid')
                 ->whereBetween('num', [1, 6]);
-        $total = $best6->count();
+
+        $total = DB::connection($world)->table('pvp_losses')->withExpression('pvp_losses', $pvp_losses)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
