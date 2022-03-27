@@ -300,7 +300,7 @@
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('history')">History</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('conquers')">Conquers</a></li>
             <li class="breadcrumb-item active" aria-current="page">Conquer stats</li>
-            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('members')">Members</a></li>
+            <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('villages')">Villages</a></li>
             <li class="breadcrumb-item"><a href="javascript:void(0);" onclick="changeView('changes')">Member changes</a></li>
         </ol>
     </nav>
