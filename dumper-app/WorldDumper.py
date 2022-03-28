@@ -83,7 +83,7 @@ class WorldDumper:
     def start(self):
         '''Start the proccess of taking a dump
         '''
-        ts = time.gmtime()
+        ts = time.localtime()
         self.__state = False
         self.__timestamp = time.strftime('%Y-%m-%d %H:00:00', ts)
         print('Attempting loggin')

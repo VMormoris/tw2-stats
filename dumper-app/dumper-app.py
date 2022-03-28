@@ -33,7 +33,7 @@ if __name__ == '__main__':
                 'world': world['world']
             })
             dumper.start()
-        now = time.mktime(time.strptime(time.strftime('%Y-%m-%d %H:00:00', time.gmtime()), '%Y-%m-%d %H:00:00'))
+        now = time.mktime(time.strptime(time.strftime('%Y-%m-%d %H:00:00', time.localtime()), '%Y-%m-%d %H:00:00'))
         next = now + HOUR + 10 * MIN
-        stime = next - time.mktime(time.gmtime())
+        stime = next - time.mktime(time.localtime())
         sleep(stime)
