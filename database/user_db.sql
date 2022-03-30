@@ -47,7 +47,6 @@ CREATE TABLE users
     "email" VARCHAR(320) NOT NULL,--- User's email address must be validated
     "salt" VARCHAR(16) NOT NULL,--- To be blend and hash with password. - I'm thinking an 128 bit UUID for salt so it's hopefully unique for everybody (but is it enough for security?)
     "password" VARCHAR(512) NOT NULL,--- We are using SHA-512 together with the salt to store the password
-    "token" VARCHAR(16) NOT NULL,--- To be used by user after authetication in order to not used password on the next transactions
     "privileges" privileges DEFAULT 'default',--- User's privileges level
     /**
     * Unfortunately I'm working alone on this project so I can't even attempt to monitor properly users accounts from
@@ -95,3 +94,17 @@ CREATE TABLE resets
     FOREIGN KEY("uid") REFERENCES users("id"),
     UNIQUE("link")
 );
+
+/**
+* Table that contains tokens that can be used by a user instead of a password
+*   The aims behind those tokens is to minized password transactions for security reasons
+*/
+CREATE TABLE tokens
+(
+    "id" BIGSERIAL,--- Token's ID (only for internal use)
+    "uid" uint8 NOT NULL,--- User's ID
+    "token" VARCHAR(16) NOT NULL,--- To be used by user after authetication in order to not used password on the next transactions
+    "expires" TIMESTAMP WITHOUT TIME ZONE NOT NULL,--- Timestamp for when token expires
+    PRIMARY KEY("id"),
+    FOREIGN KEY("uid") REFERENCES users("id")
+)
