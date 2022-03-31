@@ -246,7 +246,7 @@
                 </div>
                 <div class="col">
                     <div class="d-flex flex-row-reverse">
-                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search"></i></button>
+                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search" aria-hidden="true"></i></button>
                         <input type="search" placeholder="Search village or owner" class="searchbar">
                         <div class="conquers-radio-container">
                             <input type="radio" class="btn-check conquers-type" name="conquers-type" id="all" autocomplete="off" checked>
@@ -462,7 +462,7 @@
 
                 <div class="col">
                     <div class="d-flex flex-row-reverse">
-                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search"></i></button>
+                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search" aria-hidden="true"></i></button>
                         <input type="search" placeholder="Search village" class="searchbar">
                     </div>
                 </div>

@@ -78,16 +78,20 @@ html, body
   margin-left: 10px;
 }
 
-.navbar-end a .fa-discord
+.fa { font-size: small !important;}
+
+.fa-discord-alt
 {
-  height: 28px;
+  color: white;
+  font-size: 32px !important;
   margin-top: 10px;
   padding: 0px 5px 0px 5px;
 }
 
 .navbar-end a .fa-github
 {
-  height: 28px;
+  color: white;
+  font-size: 32px !important;
   margin-top: 10px;
   padding: 0px 5px 0px 5px;
 }

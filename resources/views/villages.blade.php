@@ -44,7 +44,7 @@
 
                 <div class="col">
                     <div class="d-flex flex-row-reverse">
-                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search"></i></button>
+                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search" aria-hidden="true"></i></button>
                         <input type="search" placeholder="Search Tribe" class="searchbar">
                     </div>
                 </div>
