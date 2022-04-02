@@ -17,7 +17,7 @@ CREATE DOMAIN uint4 AS INTEGER CHECK(VALUE>=0);
 
 --- Unsigned int type for 8 byte integer
 DROP DOMAIN IF EXISTS uint8;
-CREATE DOMAIN uint8 AS INTEGER CHECK(VALUE>=0);
+CREATE DOMAIN uint8 AS BIGINT CHECK(VALUE>=0);
 
 --- Tribes' table declaration
 CREATE TABLE tribes
