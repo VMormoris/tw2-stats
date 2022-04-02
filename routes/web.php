@@ -32,3 +32,5 @@ Route::get('/{world}/village', [VillagesController::class, 'show']);
 Route::get('/admin', function () {
     return view('update');
 });
+
+Route::get('/{world}/test', function($world){ return view('world', ['world' => $world, 'page' => 'En69']); });

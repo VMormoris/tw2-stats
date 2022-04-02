@@ -49,6 +49,42 @@ class PlayerService
     }
 
     /**
+     * Getter for world's overview information from players
+     * @param string $world Name of the world that we are intrested
+     * @return array json object containing world's overview info from players
+     */
+    public function world(string $world): array
+    {
+        //Total number of active tribes
+        $total = Player::on($world)->count();
+        //Top 5 tribes
+        $best5 = Player::on($world)->select(
+            'rankno',
+            'id',
+            'name',
+            'points',
+            'villages'
+        )->where('id', '<>', 0)
+            ->orderBy('rankno')
+            ->take(5)
+            ->get();
+        //History data for graphs
+        $history = PlayerHistory::on($world)->select('pid', 'rankno', 'timestamp')
+            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
+            ->whereIn('pid', function($query){
+                $query->select('id')->from('players');
+            })
+            ->orderBy('timestamp')
+            ->get();
+
+        return array('players' => array(
+            'total' => $total,
+            'top5' => $best5,
+            'history' => $history
+        ));
+    }
+
+    /**
      * Getter for all the data need it for player's overview page
      * @param string $world Name of the world that we are intrested
      * @param int $id Player's id

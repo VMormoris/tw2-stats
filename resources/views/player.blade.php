@@ -1,4 +1,4 @@
-@extends('layouts.world')
+@extends('layouts.basic')
 
 @section('resources')
 <!-- Chart.js -->

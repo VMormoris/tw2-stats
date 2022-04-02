@@ -1,4 +1,4 @@
-@extends('layouts.world')
+@extends('layouts.basic')
 
 @section('nav-links')
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
