@@ -41,6 +41,7 @@ class TribeService
             'offbash', 'defbash', 'totalbash',
             'vp'
         )->where('nname', 'like', $filter)
+            ->where('active', '=', true)
             ->where('id', '!=', 0)
             ->orderBy('rankno', 'ASC');
         
