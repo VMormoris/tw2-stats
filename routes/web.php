@@ -16,7 +16,7 @@ use App\Http\Controllers\VillagesController;
 |
 */
 
-Route::get('/{world}', function ($world) {
+Route::get('/', function ($world) {
     return view('home', ['world' => $world, 'page' => 'Home']);
 });
 
@@ -33,4 +33,4 @@ Route::get('/admin', function () {
     return view('update');
 });
 
-Route::get('/{world}/test', function($world){ return view('world', ['world' => $world, 'page' => 'En69']); });
+Route::get('/{world}', function($world){ return view('world', ['world' => $world, 'page' => 'En69']); });

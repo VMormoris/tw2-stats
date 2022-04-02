@@ -33,7 +33,7 @@ Route::get('/{world}/players', [PlayersController::class, 'leaderboard']);
 Route::get('/{world}/player', [PlayersController::class, 'details']);
 Route::get('/{world}/villages', [VillagesController::class, 'global_conquers']);
 Route::get('/{world}/village', [VillagesController::class, 'details']);
-Route::get('/{world}/test', function($world){
+Route::get('/{world}', function($world){
     $tr_service = new TribeService;
     $pl_service = new PlayerService;
     $vil_service = new VillageService;
