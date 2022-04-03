@@ -262,7 +262,11 @@ function updateGraphs(history)
     }
 
     {//Rank Graph
-        const options = {scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}},plugins:{tooltip:{callbacks:{label: function(ctx){const label = ctx.dataset.label || '';return label + ': ' + format(ctx.parsed.y) + ' at ' + asString(ctx.parsed.x);}}}}};
+        const datapoints = [];
+        data.rank.forEach((obj) => { datapoints.push(obj.y); });
+        const min = Math.max(Math.min(...datapoints) - 3, 1);
+        const max = Math.max(Math.max(...datapoints) + 2, 5);
+        const options = {scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}, y:{ reverse: true, suggestedMin: min, suggestedMax: max, ticks:{ stepSize: 1 } }},plugins:{tooltip:{callbacks:{label: function(ctx){const label = ctx.dataset.label || '';return label + ': ' + format(ctx.parsed.y) + ' at ' + asString(ctx.parsed.x);}}}}};
         const rankctx = document.getElementById('rankgraph').getContext('2d');
         const rankgraph = new Chart(rankctx,
             {
@@ -275,7 +279,6 @@ function updateGraphs(history)
                         data: data.rank,
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         borderColor: "rgb(225,99,132)",
-                        fill: true,
                         showLine: true
                     }]
                 },
@@ -323,7 +326,9 @@ function updateGraphs(history)
     }
 
     {//Villages Graph (aka Conquers graph) 
-        const options = {scales:{x:{ticks:{callback: function(val, index) { return createDateLabel(this.getLabelForValue(val)); }}}},plugins:{tooltip:{callbacks:{title: function(ctx) { return ctx[0].dataset.label; },label: function(ctx){const timestamp = parseInt(ctx.label);return (ctx.parsed.y == 0.05 ? 0 : format(ctx.parsed.y)) + ' villages at ' + asString(timestamp);}}}}};
+        const min = -3;
+        const max = 3;
+        const options = {scales:{x:{ticks:{callback: function(val, index) { return createDateLabel(this.getLabelForValue(val)); }}}, y:{ suggestedMin: min, suggestedMax: max }},plugins:{tooltip:{callbacks:{title: function(ctx) { return ctx[0].dataset.label; },label: function(ctx){const timestamp = parseInt(ctx.label);return (ctx.parsed.y == 0.05 ? 0 : format(ctx.parsed.y)) + ' villages at ' + asString(timestamp);}}}}};
         const villsctx = document.getElementById('villagesgraph').getContext('2d');
         const villsgraphs = new Chart(villsctx,
             {
