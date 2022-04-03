@@ -1,6 +1,6 @@
 # tw2-stats
 
-tw2-stats is a tool that provides statistics for the online game Tribal Wars 2. You can find a working version of the tool for world en69 at: [tw2-stats.com/en69](tw2-stats.com/en69). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).
+tw2-stats is a tool that provides statistics for the online game Tribal Wars 2. You can find a working version of the tool for world en69 at: [tw2-stats.com/en69](https://tw2-stats.com/en69). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).
 
 ## Contributing
 * _For reporting a bug please open an issue describing the bug._
