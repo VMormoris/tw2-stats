@@ -53,43 +53,6 @@ class TribeService
     }
 
     /**
-     * Getter for world's overview information from tribes
-     * @param string $world Name of the world that we are intrested
-     * @return array json object containing world's overview info from tribes
-     */
-    public function world(string $world): array
-    {
-        //Total number of active tribes
-        $total = Tribe::on($world)->where('active', '=', true)->count();
-        //Top 5 tribes
-        $best5 = Tribe::on($world)->select(
-            'rankno',
-            'id',
-            'name',
-            'points',
-            'villages'
-        )->where('active', '=', true)
-            ->where('id', '<>', 0)
-            ->orderBy('rankno')
-            ->take(5)
-            ->get();
-        //History data for graphs
-        $history = TribeHistory::on($world)->select('tid', 'rankno', 'timestamp')
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
-            ->whereIn('tid', function($query){
-                $query->select('id')->from('tribes');
-            })
-            ->orderBy('timestamp')
-            ->get();
-
-        return array('tribes' => array(
-            'total' => $total,
-            'top5' => $best5,
-            'history' => $history
-        ));
-    }
-
-    /**
      * Getter for all the data need it for tribe's overview page
      * @param string $world Name of the world that we are intrested
      * @param int $id Tribe's id

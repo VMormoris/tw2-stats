@@ -57,38 +57,6 @@ class VillageService
     }
 
     /**
-     * Getter for world's overview information from villages
-     * @param string $world Name of the world that we are intrested
-     * @return array json object containing world's overview info from villages
-     */
-    public function world(string $world): array
-    {
-        //Total number of active tribes
-        $total = Village::on($world)->count();
-        //Last 5 conquers
-        $best5 = Conquer::on($world)->select(
-            'conquers.vid', 'villages.name AS vname',
-            'conquers.prevpid', 'pl1.name AS old owner',
-            'conquers.nextpid', 'pl2.name AS new owner',
-            'conquers.prevtid', 'tr1.name AS old owner',
-            'conquers.nexttid', 'tr2.name AS new owner',
-            'conquers.timestamp',
-        )->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
-            ->orderBy('timestamp', 'DESC')
-            ->take(5)
-            ->get();
-
-        return array('villages' => array(
-            'total' => $total,
-            'top5' => $best5
-        ));
-    }
-
-    /**
      * Getter for all the data need it for village's overview page
      * @param string $world Name of the world that we are intrested
      * @param int $id Village's id

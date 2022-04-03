@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PlayersController;
 use App\Http\Controllers\TribesController;
 use App\Http\Controllers\VillagesController;
+use App\Http\Controllers\WorldsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,8 +17,8 @@ use App\Http\Controllers\VillagesController;
 |
 */
 
-Route::get('/', function ($world) {
-    return view('home', ['world' => $world, 'page' => 'Home']);
+Route::get('/', function () {
+    return view('home', ['page' => 'Home']);
 });
 
 Route::get('/{world}/tribes', [TribesController::class, 'index']);
@@ -29,8 +30,4 @@ Route::get('/{world}/player', [PlayersController::class, 'show']);
 Route::get('/{world}/villages', [VillagesController::class, 'index']);
 Route::get('/{world}/village', [VillagesController::class, 'show']);
 
-Route::get('/admin', function () {
-    return view('update');
-});
-
-Route::get('/{world}', function($world){ return view('world', ['world' => $world, 'page' => 'En69']); });
+Route::get('/{world}', [WorldsController::class, 'index']);

@@ -51,7 +51,7 @@ class PlayersController extends Controller
     }
 
     /**
-     * Handles all requests for player's details
+     * Handles all api requests for player's details
      * @param string $world Name of the world
      * @param Illuminate\Http\Request $req Object containing the http request that made to the server
      * @return array json object containing the apropriate response
