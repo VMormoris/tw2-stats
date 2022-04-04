@@ -9,6 +9,7 @@ tw2-stats is a tool that provides statistics for the online game Tribal Wars 2. 
 
 ## Third Party Tools
 * [PostgreSQL](https://www.postgresql.org/)
+* [ForkAwesome](https://forkaweso.me/Fork-Awesome/)
 * [Apache2](https://httpd.apache.org/)
 * [Laravel](https://laravel.com/)
 * [laravel-cte](https://github.com/staudenmeir/laravel-cte)
