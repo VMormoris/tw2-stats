@@ -20,7 +20,11 @@ class WorldsController extends Controller
      * @param string $world Name of the world
      * @return Illuminate\Contracts\View\View A view containing players' index page
      */
-    public function index(string $world) { return view('world', ['world' => $world, 'page' => $world]); }
+    public function index(string $world)
+    {
+        $name = $this->service->name($world);
+        return view('world', ['world' => $world, 'page' => $world, 'name' => $name]);
+    }
 
      /**
      * Handles all api requests for world's details

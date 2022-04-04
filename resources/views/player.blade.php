@@ -3,7 +3,6 @@
 @section('resources')
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
-<!-- Core theme JS-->
 <script src="/js/general.js"></script>
 <script src="/js/table.js"></script>
 <script src="/js/player.js"></script>
