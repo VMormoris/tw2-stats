@@ -7,6 +7,7 @@
 @endsection
 
 @section('nav-links')
+<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">{{ $world }}</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/tribes') }}">Tribes</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/players') }}">Players</a></li>
@@ -20,10 +21,12 @@
         <h1>[{{ $world }}] {{ $name }}</h1>
     </div>
 
-    <div class="d-flex flex-row">
+    <div class="d-flex flex-row mt-5">
         <div class="container" style="width: 30%;">
-            <div class="center-content">
-                <table class="table table-bordered">
+            <div class="text-center mt-2">
+                <strong><a>General Information</a></strong>
+            </div>
+                <table class="table table-bordered mt-2">
                     <thead class="thead-dark">
                         <tr>
                             <th>Players:</th>
@@ -61,14 +64,13 @@
                         </tr>
                     </thead>
                 </table>
-            </div>
         </div>
 
         <div class="container" style="width: 70%;">
             <div class="text-center mt-2">
                 <strong><a>Latest conquers </a></strong><a href="/{{ $world }}/villages">show all</a>
             </div>
-            <table class="table table-rounded">
+            <table class="table table-rounded mt-2">
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">#</th>
@@ -89,15 +91,16 @@
 
     <div class="d-flex flex-row mt-5">
         <div class="container" style="width: 50%;">
-            <div class="text-center mt-2">
+            <div class="text-center">
                 <strong><a>Top 5 tribes </a></strong><a href="/{{ $world }}/tribes">show all</a>
             </div>
-            <table class="table table-rounded">
+            <table class="table table-rounded mt-2">
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">tribe</th>
                         <th scope="col">points</th>
+                        <th scope="col">members</th>
                         <th scope="col">villages</th>
                         <th scope="col">domination</th>
                     </tr>
@@ -113,10 +116,10 @@
         </div>
 
         <div class="container" style="width: 50%;">
-            <div class="text-center mt-2">
+            <div class="text-center">
                 <strong><a>Top 5 players </a></strong><a href="/{{ $world }}/players">show all</a>
             </div>
-            <table class="table table-rounded">
+            <table class="table table-rounded mt-2">
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">#</th>

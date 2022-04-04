@@ -50,7 +50,7 @@ ON CONFLICT (id) DO UPDATE SET
 '''
 
 update_world = '''
-UPDATE TABLE worlds
+UPDATE worlds
 SET
     "tribes" = %s,
     "players" = %s,

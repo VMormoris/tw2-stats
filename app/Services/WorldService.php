@@ -45,6 +45,7 @@ class WorldService
             'id',
             'name',
             'points',
+            'members',
             'villages'
         )->where('active', '=', true)
             ->where('id', '<>', 0)
@@ -55,7 +56,7 @@ class WorldService
         $history = TribeHistory::on($world)->select('tid AS id', 'rankno', 'timestamp')
             ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
             ->whereIn('tid', function($query){
-                $query->select('id')->from('tribes');
+                $query->select('id')->from('tribes')->where('rankno', '<=', 5);
             })
             ->orderBy('timestamp')
             ->get();
@@ -88,7 +89,7 @@ class WorldService
         $history = PlayerHistory::on($world)->select('pid AS id', 'rankno', 'timestamp')
             ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
             ->whereIn('pid', function($query){
-                $query->select('id')->from('players');
+                $query->select('id')->from('players')->where('rankno', '<=', 5);
             })
             ->orderBy('timestamp')
             ->get();

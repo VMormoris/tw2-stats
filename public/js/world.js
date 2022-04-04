@@ -80,6 +80,7 @@ function updateRankAndGraph(endpoint, obj)
             '<th scope="col">' + el['rankno'] + '</th>\n' +
             '<td>' + name + '</td>\n' +
             '<td>' + format(el['points']) + '</td>\n' +
+            (endpoint === 'player' ? '' : '<td><a href="/'+ world +'/tribe?id='+ el['id'] +'&view=members">'+ el['members'] +'</a></td>\n') +
             '<td>' + villages + '</td>\n' +
             '<td>' + format(el['villages']/total_villages*100) + '%</td>\n' +
         '</tr>\n';
@@ -97,8 +98,10 @@ function updateRankAndGraph(endpoint, obj)
     //Setup graph
     history.forEach((el) => {
         const data = datasets[indexes[el['id']]].data;
-        data.push({ 'x': el['timestamp'], 'y': el['rankno']});
+        const timestamp = new Date(el['timestamp']).getTime();
+        data.push({ 'x': timestamp, 'y': el['rankno']});
     });
+    console.log(datasets);
     const options = {scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}, y:{ reverse: true, ticks:{ stepSize: 1 } }},plugins:{tooltip:{callbacks:{label: function(ctx){const label = ctx.dataset.label || '';return label + ': ' + format(ctx.parsed.y) + ' at ' + asString(ctx.parsed.x);}}}}};
     const graph_ctx = (endpoint === 'tribe' ? document.getElementById('tribes_graph') : document.getElementById('players_graph')).getContext('2d');
     const graph = new Chart(graph_ctx, {

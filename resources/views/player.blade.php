@@ -9,7 +9,8 @@
 @endsection
 
 @section('nav-links')
-<li class="nav-item"><a class="nav-link" href="{{ url('/' . $world) }}">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="{{ url('/' . $world) }}">{{ $world }}</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/tribes') }}">Tribes</a></li>
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{ url('/' . $world . '/players') }}">Players</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/villages') }}">Villages</a></li>

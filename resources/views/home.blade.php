@@ -2,6 +2,10 @@
 
 @section('nav-links')
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="/en69">en69</a></li>
+<li class="nav-item"><a class="nav-link" href="/en69/tribes">Tribes</a></li>
+<li class="nav-item"><a class="nav-link" href="/en69/players">Players</a></li>
+<li class="nav-item"><a class="nav-link" href="/en69/villages">Villages</a></li>
 @endsection
 
 @section('content')
@@ -16,12 +20,12 @@
                     <h1>A statistics tool for Tribal Wars 2</h1>
                 </div>
                 
-                <div clas="container mt-5">
-
+                <div clas="container">
+                    <br>
                     <p class="lead">tw2-stats is an open source tool that provides statistics for the online browser game "Tribal Wars 2".</p>
                     <p class="lead">Because the tool is still under development is only running for world: <a href="/en69">[EN69] Quadrangular Castle</a>. I aim to add more worlds in the future. Just be patient because I'm working alone while also being a full time student.</p>
                     <p class="lead">
-                        I would really appreciate your feedback, ideas and constributions so feel free:
+                        I would really appreciate your feedback, ideas and constributions so feel free to checkout:
                     </p>
                     
                     <div class="text-center">
