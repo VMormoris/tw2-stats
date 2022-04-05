@@ -1,6 +1,6 @@
-# tw2-stats
+![logo](public/images/logo.png)
 
-tw2-stats is a tool that provides statistics for the online game Tribal Wars 2. You can find a working version of the tool at: [tw2-stats.com](https://tw2-stats.com/). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).
+```tw2-stats``` is a tool that provides statistics for the online browser game "Tribal Wars 2". You can find a working version of the tool at: [tw2-stats.com](https://tw2-stats.com/). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).
 
 ## Contributing
 * _For reporting a bug please open an issue describing the bug._

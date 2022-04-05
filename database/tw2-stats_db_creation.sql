@@ -48,7 +48,7 @@ CREATE TABLE worlds
     "moral" activity_t NOT NULL,--- Flag for whether moral active or inactive on this world
     "relocation" activity_t NOT NULL,--- Flag for relocation whether active or inactive on this world
     "night_bonus" activity_t NOT NULL,--- Flag for whether night bonus is active or inactive on this world 
-    "time_offset" uint2 NOT NULL,--- Time offset from (aka +1 GMT etc)
+    "time_offset" SMALLINT NOT NULL,--- Time offset from (aka +1 GMT etc)
     "start" DATE NOT NULL,--- Date of when the world started
     "end" DATE,--- Date of when the world ended
     "night_start" TIME WITHOUT TIME ZONE DEFAULT '00:00:00',--- Time of when night bonus start on this world
