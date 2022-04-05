@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PlayersController;
 use App\Http\Controllers\TribesController;
 use App\Http\Controllers\VillagesController;
+use App\Http\Controllers\WorldsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,3 +30,4 @@ Route::get('/{world}/players', [PlayersController::class, 'leaderboard']);
 Route::get('/{world}/player', [PlayersController::class, 'details']);
 Route::get('/{world}/villages', [VillagesController::class, 'global_conquers']);
 Route::get('/{world}/village', [VillagesController::class, 'details']);
+Route::get('/{world}', [WorldsController::class, 'details']);

@@ -79,7 +79,8 @@ function extract_world(url)
 {
     const start = url.indexOf('/', 9) + 1;
     const end = url.indexOf('/', start);
-    return url.substr(start, end-start);
+    const length = end === -1 ? url.length : end-start;
+    return url.substr(start, length);
 }
 
 /**

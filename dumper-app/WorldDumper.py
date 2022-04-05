@@ -49,6 +49,14 @@ ON CONFLICT (id) DO UPDATE SET
     timestamp = %s;
 '''
 
+update_world = '''
+UPDATE worlds
+SET
+    "tribes" = %s,
+    "players" = %s,
+    "villages" = %s
+WHERE "wid" = %s;
+'''
 
 class WorldDumper:
     '''Class that help on taking a world dump from tw2
@@ -236,7 +244,14 @@ class WorldDumper:
         tribes = self.__data['tribes']
         players = self.__data['players']
         villages = self.__data['villages']
-        print('Starting updating database')
+        print('Starting updating databases')
+        conn = pgdb.connect(database='tw2-stats', user='tw2-stats', host='127.0.0.1', password=PASSWORD)
+        cur = conn.cursor()
+        cur.execute(update_world, (len(tribes), len(players), len(villages), self.__world))
+        conn.commit()
+        cur.close()
+        conn.close()
+
         conn = pgdb.connect(database=self.__world, user='tw2-stats', host='127.0.0.1', password=PASSWORD)
         cur = conn.cursor()
         #Update tribes
@@ -277,7 +292,7 @@ class WorldDumper:
         conn.commit()
         cur.close()
         conn.close()
-        print('Done updating database')
+        print('Done updating databases')
 
         #Recluster database
         conn = pgdb.connect(database=self.__world, user='tw2-stats', host='127.0.0.1', password=PASSWORD)

@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'zz8'),
+    'default' => env('DB_CONNECTION', 'tw2-stats'),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,12 +63,27 @@ return [
             ]) : [],
         ],
 
+        'tw2-stats' => [
+            'driver' => 'pgsql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'tw2-stats'),
+            'username' => env('DB_USERNAME', 'api'),
+            'password' => env('DB_PASSWORD', '<your_password>'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'zz8' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'zz8'),
+            'database' => env('DB_DATABASE_ZZ8', 'zz8'),
             'username' => env('DB_USERNAME', 'api'),
             'password' => env('DB_PASSWORD', '<your_password>'),
             'charset' => 'utf8',

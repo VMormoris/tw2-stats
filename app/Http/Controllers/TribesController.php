@@ -48,7 +48,7 @@ class TribesController extends Controller
     }
 
     /**
-     * Handles all requests for tribe's details
+     * Handles all api requests for tribe's details
      * @param string $world Name of the world
      * @param Illuminate\Http\Request $req Object containing the http request
      * @return array json object containing the apropriate response

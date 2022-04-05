@@ -1,16 +1,16 @@
-@extends('layouts.world')
+@extends('layouts.basic')
 
 @section('resources')
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
-<!-- Core theme JS-->
 <script src="/js/general.js"></script>
 <script src="/js/table.js"></script>
 <script src="/js/player.js"></script>
 @endsection
 
 @section('nav-links')
-<li class="nav-item"><a class="nav-link" href="{{ url('/' . $world) }}">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="{{ url('/' . $world) }}">{{ $world }}</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/tribes') }}">Tribes</a></li>
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{ url('/' . $world . '/players') }}">Players</a></li>
 <li class="nav-item"><a class="nav-link" href="{{ url('/' . $world . '/villages') }}">Villages</a></li>

@@ -51,7 +51,7 @@ class VillagesController extends Controller
     }
 
     /**
-     * Handles all requests for village's details
+     * Handles all api requests for village's details
      * @param string $world Name of the world
      * @param Illuminate\Http\Request $req Object containing the http request that made to the server
      * @return array json object containing the apropriate response
