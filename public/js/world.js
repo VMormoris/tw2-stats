@@ -91,6 +91,7 @@ function updateRankAndGraph(endpoint, obj)
             'label':  el['name'],
             'data': [],
             'backgroundColor': colorpalette[el['rankno'] - 1],
+            'borderColor': colorpalette[el['rankno'] - 1],
             'showLine': true
         });
     });

@@ -25,7 +25,7 @@
                     <p class="lead">tw2-stats is an open source tool that provides statistics for the online browser game "Tribal Wars 2".</p>
                     <p class="lead">Because the tool is still under development is only running for world: <a href="/en69">[EN69] Quadrangular Castle</a>. I aim to add more worlds in the future. Just be patient because I'm working alone while also being a full time student.</p>
                     <p class="lead">
-                        I would really appreciate your feedback, ideas and constributions so feel free to checkout:
+                        I would really appreciate your feedback, ideas and contributions so feel free to checkout:
                     </p>
                     
                     <div class="text-center">
