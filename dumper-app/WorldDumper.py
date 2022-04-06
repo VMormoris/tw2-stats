@@ -67,10 +67,10 @@ class WorldDumper:
         '''
         self.__player_id = 0
         self.__data = { 'villages': [], 'players': [], 'tribes': [] }
-        self.__left_areas = int((1000*1000)/(50*50))
-        self.__startX = 0
-        self.__startY = 0
-        self.__endX = 1000
+        self.__left_areas = (500*500)/(50*50)
+        self.__startX = 500 - 2 * 125
+        self.__startY = 500 - 2 * 125
+        self.__endX = 500 + 2 * 125
         self.__client = tw2c(settings['server'], settings['token'])
         self.__name = settings['name']
         self.__pass = settings['pass']
@@ -146,6 +146,9 @@ class WorldDumper:
             self.__client.restart()
             self.start()
             return
+        elif obj['type'] == 'Achievement/progress':
+            print('Ignoring:', obj['type'])
+            return
 
         if obj['type'] != 'Map/villageData':
             print(obj)
@@ -182,6 +185,9 @@ class WorldDumper:
             self.__client.restart()
             self.start()
             return
+        elif obj['type'] == 'Achievement/progress':
+            print('Ignoring:', obj['type'])
+            return
 
         if obj['type'] != 'Ranking/tribe':
             print(obj)
@@ -214,6 +220,9 @@ class WorldDumper:
             self.__state = False
             self.__client.restart()
             self.start()
+            return
+        elif obj['type'] == 'Achievement/progress':
+            print('Ignoring:', obj['type'])
             return
             
         if obj['type'] != 'Ranking/character':
