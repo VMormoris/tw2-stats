@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content=""/>
         <meta name="author" content=""/>
+        <!--<meta name="csrf-token" content="{{ csrf_token() }}">-->
         <title>{{ $page }} - tw2 stats</title>
         <!-- Favicon-->
         <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
@@ -19,7 +20,6 @@
         @yield('resources')
     </head>
     <body>
-
         <!-- Responsive navbar-->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">

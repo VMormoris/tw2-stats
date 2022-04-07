@@ -89,3 +89,32 @@ function extract_world(url)
  * @returns {string} String containing the number in a human friendly form 
  */
 function format(num) { return (num).toLocaleString('en-us'); }
+
+/**
+ * Creates a date label base on the given timestamp 
+ * @param {number} timestamp Unix like timestamp in miliseconds
+ * @returns {string[]} Two string in an array containg the date and time respectively
+ */
+function createDateLabel(timestamp)
+{
+    const date = new Date(timestamp);
+    let datestr = '';
+    if(date.getDate() < 10)
+        datestr += '0';
+    datestr += date.getDate() + '/';
+    if(date.getMonth() + 1 < 10)
+        datestr += '0';
+    datestr += (date.getMonth() + 1) + '/' + date.getFullYear();
+     
+    let timestr = '';
+    if(date.getHours()<10)
+        timestr += '0';
+    timestr += date.getHours() + ':';
+    if(date.getMinutes()<10)
+        timestr += '0';
+    timestr += date.getMinutes() + ':';
+    if(date.getSeconds()<10)
+        timestr += '0';
+    timestr += date.getSeconds();
+    return [datestr, timestr];
+}
