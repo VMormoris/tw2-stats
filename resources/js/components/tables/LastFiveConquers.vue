@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import TableContent from './TableContent.vue';
+import TableComponent from './templates/TableComponent.vue';
 
 const world = ref('');
 const link = ref('');
 const rows = ref([]);
+const headers = ref(['#', 'village', 'old owner', 'new owner', 'old tribe', 'new tribe', 'timestamp']);
 
 onMounted(() => {
     const url = document.location.href;
@@ -27,7 +28,6 @@ onMounted(() => {
                 'oldtribe': oldtribe, 'newtribe': newtribe
             });
         });
-        console.log(rows.value);
     });
 });
 </script>
@@ -38,19 +38,6 @@ onMounted(() => {
         <div class="text-center mt-2">
             <strong><a>Latest conquers </a></strong><a :href="link">show all</a>
         </div>
-        <table class="table table-rounded mt-2">
-            <thead class="thead-dark">
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">village</th>
-                    <th scope="col">old owner</th>
-                    <th scope="col">new owner</th>
-                    <th scope="col">old tribe</th>
-                    <th scope="col">new tribe</th>
-                    <th scope="col">timestamp</th>
-                </tr>
-            </thead>
-            <table-content :rows="rows"></table-content>
-        </table>
+        <table-component :headers="headers" :rows="rows"></table-component>
     </div>
 </template>

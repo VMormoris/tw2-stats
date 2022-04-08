@@ -28,30 +28,8 @@
         </div>
 
         <div class="d-flex flex-row mt-5">
-            <div class="container" style="width: 50%;">
-                <div class="text-center">
-                    <strong><a>Top 5 tribes </a></strong><a href="/{{ $world }}/tribes">show all</a>
-                </div>
-                <table class="table table-rounded mt-2">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">tribe</th>
-                            <th scope="col">points</th>
-                            <th scope="col">members</th>
-                            <th scope="col">villages</th>
-                            <th scope="col">domination</th>
-                        </tr>
-                    </thead>
-                    <tbody id="top5_tribes" class="table-contents">
-                    </tbody>
-                </table>
-
-                <div class="mt-5">
-                    <canvas id="tribes_graph"></canvas>
-                </div>
-
-            </div>
+            
+            <topfive-tribes></topfive-tribes>
 
             <div class="container" style="width: 50%;">
                 <div class="text-center">
