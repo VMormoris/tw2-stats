@@ -2,36 +2,39 @@
 import { ref, onMounted } from 'vue';
 
 const data = ref({
-    'players': 0,
-    'tribes': 0,
-    'villages': 0,
-    'wcond': '',
-    'start': '',
-    'end': 'TBA'
+  'players': 0,
+  'tribes': 0,
+  'villages': 0,
+  'wcond': '',
+  'start': '',
+  'end': 'TBA'
 });
 
-onMounted(()=>{
-    const url = document.location.href;
-    const world = extract_world(url);
-    
-    GET(`/api/${world}`, {}, (resp) => {
-        //Setup local variables
-        const obj = resp['world'];
-        const wcond = obj['win_condition'] === 'Domination' ? '' + obj['win_ammount'] + '% Domination' : '' + format(obj['win_ammount']) + ' VP';
-        const start = new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
-        const end = obj['end'] === null ? 'TBA' : new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
 
-        //Update webpage
-        data.value['players'] = format(obj['players']);
-        data.value['tribes'] = format(obj['tribes']);
-        data.value['villages'] = format(obj['villages']);
-        data.value['wcond'] = wcond;
-        data.value['start'] = start;
-        data.value['end'] = end;
+onMounted(()=>{
+  const url = document.location.href;
+  const world = extract_world(url);
+
+  GET(`/api/${world}`, {}, (resp) => {
+    //Setup local variables
+    const obj = resp['world'];
+    const wcond = obj['win_condition'] === 'Domination' ? '' + obj['win_ammount'] + '% Domination' : '' + format(obj['win_ammount']) + ' VP';
+    const start = new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
+    const end = obj['end'] === null ? 'TBA' : new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
+
+    //Update webpage
+    data.value['players'] = format(obj['players']);
+    data.value['tribes'] = format(obj['tribes']);
+    data.value['villages'] = format(obj['villages']);
+    data.value['wcond'] = wcond;
+    data.value['start'] = start;
+    data.value['end'] = end;
         
-        //Store variable for later use
-        total_villages = data['villages'];
-    });
+    //Store variable for later use
+    globals.total_villages = obj['villages'];
+    globals.wcond = obj['win_condition'];
+  });
+
 });
 
 </script>

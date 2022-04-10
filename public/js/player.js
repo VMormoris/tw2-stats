@@ -269,7 +269,7 @@ function updateGraphs(history)
         );
     }
 
-    {//Rank Graph
+    /*{//Rank Graph
         const datapoints = [];
         data.rank.forEach((obj) => { datapoints.push(obj.y); });
         const min = Math.max(Math.min(...datapoints) - 3, 1);
@@ -293,7 +293,7 @@ function updateGraphs(history)
                 options: options
             }
         );
-    }
+    }*/
 
     {//Bash Graph
         const options ={scales:{x:{ticks:{callback: function(val, index) { return index % 3 === 0 ? createDateLabel(parseInt(val)) : ''; }}}},plugins:{tooltip:{callbacks:{title: function(ctx) { return ctx[0].dataset.label; },label: function(ctx) { return format(ctx.parsed.y) + ' bash points at ' + asString(ctx.parsed.x); }}}}};

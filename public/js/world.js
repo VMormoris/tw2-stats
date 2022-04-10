@@ -7,7 +7,6 @@ var onload = function()
     world = extract_world(url);
     GET('/api/' + world, { 'view': 'players' }, (obj) => { updateRankAndGraph('player', obj); });
     //GET('/api/' + world, { 'view': 'tribes' }, (obj) => { updateRankAndGraph('tribe', obj); });
-
 }
 
 function updateRankAndGraph(endpoint, obj)
@@ -56,14 +55,14 @@ function updateRankAndGraph(endpoint, obj)
         const timestamp = new Date(el['timestamp']).getTime();
         data.push({ 'x': timestamp, 'y': el['rankno']});
     });
-    console.log(datasets);
+
     const options = {scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}, y:{ reverse: true, ticks:{ stepSize: 1 } }},plugins:{tooltip:{callbacks:{label: function(ctx){const label = ctx.dataset.label || '';return label + ': ' + format(ctx.parsed.y) + ' at ' + asString(ctx.parsed.x);}}}}};
     const graph_ctx = (endpoint === 'tribe' ? document.getElementById('tribes_graph') : document.getElementById('players_graph')).getContext('2d');
-    const graph = new Chart(graph_ctx, {
+    /*const graph = new Chart(graph_ctx, {
         'type': 'scatter',
         'data': { 'datasets': datasets },
         'options': options
     });
-
+    */
 }
 

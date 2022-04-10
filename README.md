@@ -14,6 +14,7 @@
 * [laravel-cte](https://github.com/staudenmeir/laravel-cte)
 * [Vue3](https://vuejs.org/)
 * [Bootstrap](https://getbootstrap.com/)
+* [vue-chart-3](https://vue-chart-3.netlify.app/)
 * [ChartJS](https://www.chartjs.org/)
 * [ForkAwesome](https://forkaweso.me/Fork-Awesome/)
 

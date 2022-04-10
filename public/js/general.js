@@ -1,3 +1,5 @@
+//Variable that holds all global variables to shared between components
+const globals = {};
 
 /**
  * Performs a get request with the specified arguments
