@@ -109,7 +109,7 @@ class WorldDumper:
         if obj['type'] == 'Login/success':
             self.__player_id = obj['data']['player_id']
             self.__client.emit('Authentication/selectCharacter', { 'id': self.__player_id, 'world_id': self.__world }, self.__onworld_selection)
-        elif obj['type'] == 'System/error':
+        elif obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
             print('Login failed')
             self.__client.disconnect()
         else:
@@ -140,8 +140,8 @@ class WorldDumper:
     def __onvillages(self, obj):
         '''Callback for villages
         '''
-        if obj['type'] == 'System/error':
-            time.sleep(60.0)
+        if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
+            time.sleep(120.0)
             self.__state = False
             self.__client.restart()
             self.start()
@@ -179,8 +179,8 @@ class WorldDumper:
     def __ontribes(self, obj):
         '''Callback for tribes
         '''
-        if obj['type'] == 'System/error':
-            time.sleep(60.0)
+        if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
+            time.sleep(120.0)
             self.__state = False
             self.__client.restart()
             self.start()
@@ -215,8 +215,8 @@ class WorldDumper:
     def __onplayers(self, obj):
         '''Callback for players
         '''
-        if obj['type'] == 'System/error':
-            time.sleep(60.0)
+        if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
+            time.sleep(120.0)
             self.__state = False
             self.__client.restart()
             self.start()
