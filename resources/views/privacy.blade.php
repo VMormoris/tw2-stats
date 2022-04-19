@@ -71,7 +71,6 @@
                 <li><strong>The right to object to processing:</strong> You have the right to object to our processing of your personal data, under certain conditions.</li>
                 <li><strong>The right to data portability:</strong> You have the right to request that we transfer the data that we have collected to another organization, or directly to you, under certain conditions.</strong></li>
             </ul>
-            <em>If you make a request, we have one month to respond to you. If you would like to exercise any of these rights, please contact us.</em>
         </p>
     </div>
 </div>

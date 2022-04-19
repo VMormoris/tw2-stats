@@ -1,5 +1,9 @@
 @extends('layouts.basic')
 
+@section('resources')
+<script src="/js/general.js"></script>
+@endsection
+
 @section('nav-links')
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
 <li class="nav-item"><a class="nav-link" href="/en69">en69</a></li>
