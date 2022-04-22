@@ -142,11 +142,11 @@ class PlayerService
      */
     public function conquers(string $world, int $id, string $show, string $filter, int $offset, int $items)
     {        
-        if($show == 'all')
+        if($show === 'all')
             return $this->all($world, $id, $filter, $offset, $items);
-        else if($show == 'losses')
+        else if($show === 'losses')
             return $this->losses($world, $id, $filter, $offset, $items);
-        else if($show == 'gains')
+        else if($show === 'gains')
             return $this->gains($world, $id, $filter, $offset, $items);
         else
             return array('error' => 'Use of unrecognized show parameter');
@@ -344,13 +344,13 @@ class PlayerService
      */
     public function stats(string $world, int $id, string $spec)
     {
-        if($spec == 'pvt_gains')
+        if($spec === 'pvt_gains')
             return $this->pvt_gains($world, $id);
-        else if($spec == 'pvt_losses')
+        else if($spec === 'pvt_losses')
             return $this->pvt_losses($world, $id);
-        else if($spec == 'pvp_gains')
+        else if($spec === 'pvp_gains')
             return $this->pvp_gains($world, $id);
-        else if($spec == 'pvp_losses')
+        else if($spec === 'pvp_losses')
             return $this->pvp_losses($world, $id);
         else
             return array('error' => 'Use of unrecognized stats specification');

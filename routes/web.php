@@ -31,11 +31,3 @@ Route::get('/{world}/villages', [VillagesController::class, 'index']);
 Route::get('/{world}/village', [VillagesController::class, 'show']);
 
 Route::get('/{world}', [WorldsController::class, 'index']);
-
-Route::get('/{world}/privacy', function($world){
-    return view('privacy', ['page' => 'privacy']);
-});
-
-Route::get('/{world}/test', function($world){
-    return view('test', ['page' => 'test']);
-});

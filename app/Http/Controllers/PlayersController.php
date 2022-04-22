@@ -72,19 +72,19 @@ class PlayersController extends Controller
         $offset = ($page - 1) * $items;
 
         //Respond according to the given view input
-        if($view == 'overview')
+        if($view === 'overview')
             return $this->service->overview($world, $id);
-        else if($view == 'history')
+        else if($view === 'history')
             return $this->service->history($world, $id, $offset, $items);
-        else if($view == 'conquers')
+        else if($view === 'conquers')
             return $this->service->conquers($world, $id, $show, $filter, $offset, $items);
-        else if($view == 'villages')
+        else if($view === 'villages')
             return $this->service->villages($world, $id, $filter, $offset, $items);
-        else if($view == 'changes')
+        else if($view === 'changes')
             return $this->service->changes($world, $id, $offset, $items);
-        else if($view == 'stats')
+        else if($view === 'stats')
             return $this->service->stats($world, $id, $spec);
-        else if($view == 'name')
+        else if($view === 'name')
             return $this->service->name($world, $id);
         else
             return array('error' => 'Use of unrecognized view parameter');

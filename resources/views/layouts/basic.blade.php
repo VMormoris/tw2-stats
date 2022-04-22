@@ -46,7 +46,7 @@
         @yield('content')
         <footer class="footer mt-auto py-3 bg-dark">
             <div class="container">
-                <a style="color: white">Copyright © 2022  tw2-stats</a>
+                <a class="white no-u" href="https://www.apache.org/licenses/LICENSE-2.0">Copyright © 2022  tw2-stats</a><a class="white no-u">, </a><a class="white" href="/privacy">Privacy Policy</a>
             </div>
         </footer>
 

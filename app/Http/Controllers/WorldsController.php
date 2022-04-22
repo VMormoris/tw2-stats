@@ -22,6 +22,9 @@ class WorldsController extends Controller
      */
     public function index(string $world)
     {
+        if($world === 'privacy')//Privacy page is not actualy a world but it's the only exception in our case for the time being
+            return view('privacy', ['page' => 'privacy']);
+        
         $name = $this->service->name($world);
         return view('world', ['world' => $world, 'page' => $world, 'name' => $name]);
     }
@@ -37,13 +40,13 @@ class WorldsController extends Controller
         //Parse all possible url arguments
         $view = $req->input('view', 'overview');
         //Respond according to the given view input
-        if($view == 'overview')
+        if($view === 'overview')
             return $this->service->overview($world);
-        else if($view == 'tribes')
+        else if($view === 'tribes')
             return $this->service->tribes($world);
-        else if($view == 'players')
+        else if($view === 'players')
             return $this->service->players($world);
-        else if($view == 'villages')
+        else if($view === 'villages')
             return $this->service->villages($world);
         else
             return array('error' => 'Use of unrecognized view parameter');

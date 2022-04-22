@@ -31,7 +31,6 @@ onMounted(()=>{
     data.value['end'] = end;
         
     //Store variable for later use
-    globals.total_villages = obj['villages'];
     globals.wcond = obj['win_condition'];
   });
 

@@ -15,7 +15,7 @@
         <h1>Privacy Policy</h1>
     </div>
 
-    <div class="container mt-2">
+    <div class="container mw-840 mt-5 mb-5">
         <p>
             We at tw2-stats, accessible from tw2-stats.com, don't want your personal 
             data. You should also know that <strong>will never sell any information 

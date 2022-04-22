@@ -32,6 +32,7 @@ function updateRankAndGraph(endpoint, obj)
     //Setup local variables
     const top5 = obj['top5'];
     const history = obj['history'];
+    const count = obj['count'];
     const datasets = [];
 
     //Setup table
@@ -51,7 +52,7 @@ function updateRankAndGraph(endpoint, obj)
         if(endpoint === 'tribe')
             row['members'] = members;
         row['villages'] = villages;
-        row['domination'] = globals.wcond === 'Domination' ? format(obj['villages']/globals.total_villages*100) + '%' : format(obj['vp']);
+        row['domination'] = globals.wcond === 'Domination' ? format(obj['villages']/count*100) + '%' : format(obj['vp']);
         rows.value[endpoint].push(row);
         
         datasets.push({

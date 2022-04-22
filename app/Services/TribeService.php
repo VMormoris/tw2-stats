@@ -168,13 +168,13 @@ class TribeService
      */
     public function conquers(string $world, int $id, string $show, string $filter, int $offset, int $items): array
     {
-        if($show == 'all')
+        if($show === 'all')
             return $this->all($world, $id, $filter, $offset, $items);
-        else if($show == 'losses')
+        else if($show === 'losses')
             return $this->losses($world, $id, $filter, $offset, $items);
-        else if($show == 'gains')
+        else if($show === 'gains')
             return $this->gains($world, $id, $filter, $offset, $items);
-        else if($show == 'internals')
+        else if($show === 'internals')
             return $this->internals($world, $id, $filter, $offset, $items);
         else
             return array('error' => 'Use of unrecognized show parameter');
@@ -465,13 +465,13 @@ class TribeService
      */
     public function stats(string $world, int $id, string $spec)
     {
-        if($spec == 'tvt_gains')
+        if($spec === 'tvt_gains')
             return $this->tvt_gains($world, $id);
-        else if($spec == 'tvt_losses')
+        else if($spec === 'tvt_losses')
             return $this->tvt_losses($world, $id);
-        else if($spec == 'tvp_gains')
+        else if($spec === 'tvp_gains')
             return $this->tvp_gains($world, $id);
-        else if($spec == 'tvp_losses')
+        else if($spec === 'tvp_losses')
             return $this->tvp_losses($world, $id);
         else
             return array('error' => 'Use of unrecognized stats specification');

@@ -68,7 +68,7 @@ function Update()
 <template>
 <div class="container">
     
-    <div>
+    <div class="text-center mt-5">
         <h1>Tribe's Ranking</h1>
     </div>
 
@@ -82,7 +82,7 @@ function Update()
 
                 <div class="col">
                     <div class="d-flex flex-row-reverse">
-                        <button type="submit" class="btn btn-primary" onclick="updateFilter(event)"><i class="fa fa-search" aria-hidden="true"></i></button>
+                        <button type="submit" class="btn btn-primary ml-2" onclick="updateFilter(event)"><i class="fa fa-search" aria-hidden="true"></i></button>
                         <input type="search" placeholder="Search Tribe" class="searchbar">
                     </div>
                 </div>
@@ -90,7 +90,7 @@ function Update()
         </div>
 
 
-        <div class="container">
+        <div class="container mt-1">
             <table-component :headers="headers" :rows="rows"></table-component>
             <pagination :page="page" :total="total" @pageChange="onPageChange"></pagination>
         </div>
