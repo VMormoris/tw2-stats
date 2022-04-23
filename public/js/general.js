@@ -80,9 +80,9 @@ function get_params(url)
 function extract_world(url)
 {
     const start = url.indexOf('/', 9) + 1;
-    const end = url.indexOf('/', start);
-    const length = end === -1 ? url.length : end-start;
-    return url.substr(start, length);
+    const endindex = url.indexOf('/', start);
+    const end = endindex === -1 ? url.length - 1  : endindex;
+    return url.substring(start, end);
 }
 
 /**

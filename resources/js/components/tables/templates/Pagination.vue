@@ -18,7 +18,6 @@ watch(props, (newprops) => { UpdateComponent(); });
 
 function UpdateComponent()
 {
-    console.log(props.page + '/' + props.total);
     if(props.total == 0 || props.page == 0)
         return;
     

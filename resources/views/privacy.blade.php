@@ -60,18 +60,6 @@
                 <li>Cookie settings within <a href="https://help.opera.com/en/latest/web-preferences/#cookies">Opera</a></li>
             </ul>
         </p>
-        <h3>Your Rights</h3>
-        <p>
-            We would like to make sure you are fully aware of all of your data protection rights. Every user is entitled to the following:
-            <ul>
-                <li><strong>The right to access:</strong> You have the right to request copies of your personal data.</li>
-                <li><strong>The right to rectification:</strong> You have the right to request that we correct any information you believe is inaccurate. You also have the right to request that we complete the information you believe is incomplete.</li>
-                <li><strong>The right to erasure:</strong> You have the right to request that we erase your personal data.</li>
-                <li><strong>The right to restrict processing:</strong> You have the right to request that we restrict the processing of your personal data, under certain conditions.</li>
-                <li><strong>The right to object to processing:</strong> You have the right to object to our processing of your personal data, under certain conditions.</li>
-                <li><strong>The right to data portability:</strong> You have the right to request that we transfer the data that we have collected to another organization, or directly to you, under certain conditions.</strong></li>
-            </ul>
-        </p>
     </div>
 </div>
 
