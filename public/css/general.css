@@ -80,6 +80,19 @@ html, body
 
 .fa { font-size: small !important;}
 
+.fa-postgresql, .fa-laravel, .fa-fork-awesome{
+  font-size: 32px !important;
+  padding: 0rem 0.25rem;
+}
+
+.icon {
+  height: 32px;
+  padding: 0rem 0.25rem;
+}
+
+.fa-postgresql { color: #336791; }
+.fa-laravel { color: #f9322c; }
+
 .nav-fa
 {
   color: white;
@@ -87,9 +100,15 @@ html, body
   padding: 0px 5px 0px 5px;
 }
 
+.fa-spinner
+{
+  font-size: 64px !important;
+  margin: 5rem 0rem;
+}
+
 .fa-btn { font-size: 16px !important; }
 
-.full-height { height: calc(100% - 128px); }
+.full-height { height: calc(100% - 141px); }
 
 .btn-rounded
 {
@@ -127,6 +146,7 @@ html, body
 .ml-2 { margin-left: 0.25rem; }
 .ml-5 { margin-left: 0.5rem; }
 
+.mb-1 { margin-bottom: 0.1rem;}
 .mb-2 { margin-bottom: 0.25rem; }
 .mb-5 { margin-bottom: 0.5rem; }
 .page-link:hover { cursor: pointer; }
@@ -135,3 +155,5 @@ html, body
 .white:hover { color: white; }
 .no-u { text-decoration: none; }
 .mw-840 { max-width: 840px !important; }
+
+.lh-32 { line-height: 32px; }

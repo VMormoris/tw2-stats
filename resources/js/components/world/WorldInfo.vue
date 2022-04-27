@@ -39,9 +39,9 @@ onMounted(()=>{
 </script>
 
 <template>
-  <div class="container" style="width: 30%">
+  <div class="container" style="width: 25%">
     <div class="text-center mt-2">
-      <strong><a>General Information</a></strong>
+      <strong><a style="font-size: 20px">General Information</a></strong>
     </div>
     <table class="table table-bordered mt-2">
       <thead class="thead-dark">

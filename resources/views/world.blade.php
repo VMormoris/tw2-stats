@@ -16,7 +16,10 @@
 <div id="app">
     <!-- Page content-->
     <div class="container">
-        <div class="text-center mt-5">
+
+        <breadcrumb></breadcrumb>
+
+        <div class="text-center mt-2">
             <h1>[{{ $world }}] {{ $name }}</h1>
         </div>
 

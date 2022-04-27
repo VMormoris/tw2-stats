@@ -27,6 +27,7 @@ const total = ref(0);
 const rows = ref([]);
 
 //Other Vairables
+const loading = ref(true);
 let clockHandle = null;
 
 function onItemsChange(newitems)
@@ -66,9 +67,15 @@ function Update()
 {
     const url = document.location.href;
     const world = extract_world(url);
-    buildurl_params();
+    
+    //Delete previous content
     rows.value = [];
-    GET(`/api/${world}/${props.endpoint}`, {'page': page.value, 'items': items.value, 'filter': filter.value }, (resp) => {
+    //TODO(Vasilis): Setup loading animation (probably something like a buffering gif)
+    loading.value = true;
+    const reqobj = {'page': page.value, 'items': items.value, 'filter': filter.value };
+    GET(`/api/${world}/${props.endpoint}`, reqobj, (resp) => {
+        loading.value = false;
+        build_url_params(reqobj);
         total.value = Math.ceil(resp['total']/items.value);
         const data = resp['data'];
         const offset = (page.value - 1) * items.value;
@@ -92,17 +99,15 @@ function Update()
                 'num': format(num),
                 'name': `<a href="/${world}/village?id=${row['vid']}">${row['name']} (${row['x']}|${row['y']})</a>`,
                 'points': format(row['points']),
-                'oldowner': oldowner,
-                'newowner': `<a href="/${world}/player?id=${row['nextpid']}">${row['new owner']}</a>`,
-                'oldtribe': oldtribe,
-                'newtribe': newtribe,
+                'oldowner': oldowner, 'newowner': `<a href="/${world}/player?id=${row['nextpid']}">${row['new owner']}</a>`,
+                'oldtribe': oldtribe, 'newtribe': newtribe,
                 'timestamp': row['timestamp']
             });
         }
 
         function UpdatePlayers(row)
         {
-            const villstr = row['villages'] === 0 ? row['villages'] : `<a href="/${world}/player?id=${row['id']}&view="villages">${format(row['villages'])}</a>`;
+            const villstr = row['villages'] === 0 ? row['villages'] : `<a href="/${world}/player?id=${row['id']}&view=villages">${format(row['villages'])}</a>`;
             const tribestr = row['tid'] === 0 ? row['tname'] : `<a href="/${world}/tribe?id=${row['tid']}">${row['tname']}</a>`;
             rows.value.push({
                 'num': format(row['rankno']),
@@ -110,66 +115,72 @@ function Update()
                 'tribe': tribestr,
                 'points': format(row['points']),
                 'villages': villstr,
-                'offbash': format(row['offbash']),
-                'defbash': format(row['defbash']),
-                'totalbash': format(row['totalbash']),
+                'offbash': format(row['offbash']), 'defbash': format(row['defbash']), 'totalbash': format(row['totalbash']),
                 'vp': format(row['vp'])
             });        
         }
 
         function UpdateTribes(row)
         {
-            const memberstr = row['members'] === 0 ? row['members'] : `<a href=/${world}/tribe?id=${row['id']}&view="members">${row['members']}</a>`;
+            const memberstr = row['members'] === 0 ? row['members'] : `<a href="/${world}/tribe?id=${row['id']}&view=members">${row['members']}</a>`;
             rows.value.push({
                 'num': format(row['rankno']),
-                'name': `<a href="/${world}/tribe?id=${row['id']}">${row['name']}</a>`,
-                'tag': row['tag'],
+                'name': `<a href="/${world}/tribe?id=${row['id']}">${row['name']}</a>`, 'tag': row['tag'],
                 'points': format(row['points']),
                 'members': memberstr,
                 'villages': format(row['villages']),
-                'offbash': format(row['offbash']),
-                'defbash': format(row['defbash']),
-                'totalbash': format(row['totalbash']),
+                'offbash': format(row['offbash']), 'defbash': format(row['defbash']), 'totalbash': format(row['totalbash']),
                 'vp': format(row['vp'])
             });
         }
     });
 }
 
-onMounted(() => { Update(); });
+onMounted(() => {
+    const url = document.location.href;
+    const params = get_params(url);
+    if(params.hasOwnProperty('items'))
+    {
+        items.value = params['items'];
+        document.getElementById('ipp'+items.value).checked = true;
+    }
+    if(params.hasOwnProperty('filter'))
+        filter.value = params['filter'];
+    if(params.hasOwnProperty('page'))
+        page.value = params['page'];
+    Update();
+});
 </script>
 
 <template>
-<div class="container">
 
-    <div class="text-center mt-5">
-        <h1>{{ props.title }}</h1>
+<div class="text-center mt-2">
+    <h1>{{ props.title }}</h1>
+</div>
+
+<div>
+        
+    <div class="container mt-2">
+        <div class="row">
+                
+            <div class="col">
+                <item-selection :items="items" @itemsChange="onItemsChange"></item-selection>
+            </div>
+            <div class="col">
+                <div class="d-flex flex-row-reverse">
+                    <button type="submit" class="btn btn-primary ml-2" @click="Update"><i class="fa fa-search" aria-hidden="true"></i></button>
+                    <input type="search" :placeholder="placeholder" class="searchbar" @keyup="onFilterChange" style="width: 250px">
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <div>
-        
-        <div class="container mt-5">
-            <div class="row">
-                
-                <div class="col">
-                    <item-selection :items="items" @itemsChange="onItemsChange"></item-selection>
-                </div>
-                <div class="col">
-                    <div class="d-flex flex-row-reverse">
-                        <button type="submit" class="btn btn-primary ml-2" @click="Update"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        <input type="search" :placeholder="placeholder" class="searchbar" @keyup="onFilterChange" style="width: 250px">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="container mt-1">
-            <table-component :headers="headers[props.endpoint]" :rows="rows"></table-component>
-            <pagination :page="page" :total="total" @pageChange="onPageChange"></pagination>
-        </div>
-
+    <div class="container mt-1">
+        <table-component :headers="headers[props.endpoint]" :rows="rows" :loading="loading"></table-component>
+        <pagination :page="page" :total="total" @pageChange="onPageChange"></pagination>
     </div>
 
 </div>
+
 </template>

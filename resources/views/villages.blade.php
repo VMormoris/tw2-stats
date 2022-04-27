@@ -15,7 +15,10 @@
 
 @section('content')
 <div id="app">
-    <leaderboard :endpoint="'villages'" :title="'Latest world\'s conquers'" :placeholder="'Search Village, Player or Tribe'"></leaderboard>
+    <div class="container">
+        <breadcrumb></breadcrumb>
+        <leaderboard :endpoint="'villages'" :title="'Latest world\'s conquers'" :placeholder="'Search Village, Player or Tribe'"></leaderboard>
+    </div>
 </div>
 <script src="{{ asset('/js/app.js') }}"></script>
 @endsection

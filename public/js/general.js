@@ -81,8 +81,9 @@ function extract_world(url)
 {
     const start = url.indexOf('/', 9) + 1;
     const endindex = url.indexOf('/', start);
-    const end = endindex === -1 ? url.length - 1  : endindex;
-    return url.substring(start, end);
+    const hashtag = url.charAt(url.length-1) === '#';
+    const end = endindex === -1 ? url.length : endindex;
+    return url.substring(start, hashtag ? end - 1 : end);
 }
 
 /**
@@ -91,6 +92,14 @@ function extract_world(url)
  * @returns {string} String containing the number in a human friendly form 
  */
 function format(num) { return (num).toLocaleString('en-us'); }
+
+/**
+ * Transforms a given string to it's formal equivalent. It basically Capitalizes
+ *  the first letter of the string.
+ * @param {string} str String to be formalized 
+ * @returns {string} The formal equivalent string
+ */
+function formalize(str) { return str.charAt(0).toUpperCase() + str.substring(1); }
 
 /**
  * Creates a date label base on the given timestamp 
@@ -119,4 +128,28 @@ function createDateLabel(timestamp)
         timestr += '0';
     timestr += date.getSeconds();
     return [datestr, timestr];
+}
+
+/**
+ * Sets the url parameters for the given user input
+ */
+function build_url_params(reqobj)
+{
+    let params = '';
+    let first = true;
+    for(const prop in reqobj)
+    {
+        const value = reqobj[prop];
+        if
+        (//Ingore default values
+            (prop === 'page' && value === 1 ) ||
+            (prop === 'filter' && value === '') ||
+            (prop === 'items' && value === 12)
+        ) continue;
+        params += (first ? '?' : '&') + `${prop}=${value}`;
+        if(first) first = false;
+    }
+
+    const fullurl = document.location.pathname + params;
+    window.history.replaceState(null, null, fullurl);
 }
