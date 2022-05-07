@@ -8,5 +8,6 @@ app.component('topfive', require('./components/world/TopFive.vue').default);
 app.component('test-component', require('./components/TestComponent.vue').default);
 app.component('leaderboard', require('./components/tables/Leaderboard.vue').default);
 app.component('breadcrumb', require('./components/Breadcrumb.vue').default);
-
+app.component('tribe', require('./components/Tribe.vue').default);
+app.component('player', require('./components/Player.vue').default);
 app.mount('#app');

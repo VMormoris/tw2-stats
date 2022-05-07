@@ -1,11 +1,12 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="Checkout {{ $name }}'s information on world: [{{ $world }}]" key="description"/>
+@endsection
+
 @section('resources')
 <!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
 <script src="/js/general.js"></script>
-<script src="/js/table.js"></script>
-<script src="/js/player.js"></script>
 @endsection
 
 @section('nav-links')
@@ -18,6 +19,11 @@
 
 @section('content')
 <!-- Page content-->
+<div id="app">
+    <player name="{{ $name }}"></player>
+</div>
+<script src="{{ asset('/js/app.js') }}"></script>
+<!--
 <div class="container subpage-container" id="overview">
 
     <nav class="mt-5" style="--bs-breadcrumb-divider: '';" aria-label="breadcrumb">
@@ -570,4 +576,5 @@
     </div>
 
 </div>
+-->
 @endsection

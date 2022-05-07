@@ -80,9 +80,10 @@ html, body
 
 .fa { font-size: small !important;}
 
-.fa-postgresql, .fa-laravel, .fa-fork-awesome{
-  font-size: 32px !important;
+.fa-postgresql, .fa-laravel, .fa-bootstrap, .fa-fork-awesome{
+  font-size: 37px !important;
   padding: 0rem 0.25rem;
+  vertical-align: middle;
 }
 
 .icon {
@@ -92,6 +93,7 @@ html, body
 
 .fa-postgresql { color: #336791; }
 .fa-laravel { color: #f9322c; }
+.fa-bootstrap { color: #7e12f9; }
 
 .nav-fa
 {
@@ -108,7 +110,7 @@ html, body
 
 .fa-btn { font-size: 16px !important; }
 
-.full-height { height: calc(100% - 141px); }
+.full-height { height: calc(100% - 127.5px); }
 
 .btn-rounded
 {
@@ -145,6 +147,7 @@ html, body
 .pl-2 { padding-left: 0.25rem; }
 .ml-2 { margin-left: 0.25rem; }
 .ml-5 { margin-left: 0.5rem; }
+.ml-breadcrumb { margin-left: 1.1rem; }
 
 .mb-1 { margin-bottom: 0.1rem;}
 .mb-2 { margin-bottom: 0.25rem; }
@@ -156,4 +159,13 @@ html, body
 .no-u { text-decoration: none; }
 .mw-840 { max-width: 840px !important; }
 
-.lh-32 { line-height: 32px; }
+.lh-37 { line-height: 37px; }
+
+.text-warning span
+{
+  background: #ffc107;
+  height: 3px;
+  width: 9px;
+  display: inline-block;
+  vertical-align: middle;
+}

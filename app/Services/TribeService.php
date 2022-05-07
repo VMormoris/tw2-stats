@@ -49,7 +49,25 @@ class TribeService
         $count = $tribes->count();
         $tribes = $tribes->skip($offset)->take($items)->get();
         
-        return array('total' => $count, 'data' => $tribes);
+        //Extra details(aka yesterday's rankno)
+        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
+        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
+        $details = TribeHistory::on($world)->select(
+            'tid AS id',
+            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(members) AS oldmembers, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->whereIn('tid', function($query) use(&$filter, $offset, $items){
+            $query->select('id')->from('tribes')
+                ->where('nname', 'like', $filter)
+                ->where('active', '=', true)
+                ->where('id', '!=', 0)
+                ->orderBy('rankno', 'ASC')
+                ->skip($offset)
+                ->take($items);
+        })->whereBetween('timestamp', [$start, $end])
+            ->groupBy('tid')
+            ->get();
+
+        return array('total' => $count, 'data' => $tribes, 'details' => $details);
     }
 
     /**
@@ -207,7 +225,24 @@ class TribeService
         $count = $members->count();
         $members = $members->skip($offset)->take($items)->get();
 
-        return array('total' => $count, 'data' => $members);
+        //Extra details(aka yesterday's rankno)
+        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
+        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
+        $details = PlayerHistory::on($world)->select(
+            'pid AS id',
+            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->whereIn('pid', function($query) use(&$filter, $offset, $items){
+            $query->select('id')->from('players')
+                ->where('nname', 'like', $filter)
+                ->where('id', '!=', 0)
+                ->orderBy('rankno', 'ASC')
+                ->skip($offset)
+                ->take($items);
+        })->whereBetween('timestamp', [$start, $end])
+            ->groupBy('pid')
+            ->get();
+
+        return array('total' => $count, 'data' => $members, 'details' => $details);
     }
 
     /**

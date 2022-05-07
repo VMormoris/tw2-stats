@@ -3,7 +3,16 @@
     <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content=""/>
+        <!-- Meta data for discord links -->
+        <meta name="og:type" content="website" key="og_type"/>
+        <meta name="og:title" content="{{ $page }} - tw2 stats" key="title"/>
+        <meta name="og:site_name" content="tw2-stats.com" key="site_name"/>
+        <meta name="og:image" content="/images/logo_big.png" key="image"/>
+        <meta name="twitter:card" content="summary_large_image" key="misc-card"/>
+        <!-- Other meta tag(s) to be added later
+        <meta name="theme-color" content="" key="theme-color"/>
+        -->
+        @yield('meta')
         <meta name="author" content=""/>
         <!--<meta name="csrf-token" content="{{ csrf_token() }}">-->
         <title>{{ $page }} - tw2 stats</title>
@@ -14,9 +23,9 @@
         <!-- Fork Awesome 1.2 -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">
         <!-- Bootstrap core CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-        <!-- Bootstrap core JS-->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">        <!-- Bootstrap core JS-->
+        <!-- JavaScript Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
         @yield('resources')
     </head>
     <body>
@@ -43,8 +52,8 @@
 
         @yield('content')
         <footer class="footer mt-auto bg-dark">
-            <div class="container py-3">
-                <div class="row lh-32">
+            <div class="container py-2">
+                <div class="row lh-37">
                     <div class="col">
                         <a class="white no-u" href="https://www.apache.org/licenses/LICENSE-2.0">Copyright © 2022  tw2-stats</a><a class="white no-u">, </a><a class="white" href="/privacy">Privacy Policy</a>
                     </div>
@@ -55,9 +64,9 @@
                             <a class="white" href="https://forkaweso.me/Fork-Awesome/">
                                 <i class="fa fa-fork-awesome" aria-hidden="true"></i>
                             </a>
-                            <!-- Chartjs Icon -->
-                            <a href="https://www.chartjs.org/">
-                                <img class="icon" src="/images/chartjs-logo.svg"></img>
+                            <!-- Bootstrap Icon -->
+                            <a href="https://getbootstrap.com/">
+                                <i class="fa fa-bootstrap" aria-hidden="true"></i>
                             </a>
                             <!-- Vue Icon -->
                             <a href="https://vuejs.org/">
@@ -71,10 +80,10 @@
                                 <i class="fa fa-laravel" aria-hidden="true"></i>
                             </a>
                             <!-- PostgreSQL Icon -->
-                            <a href="https://www.postgresql.org/">
+                            <a class="ml-2" href="https://www.postgresql.org/">
                                 <i class="fa fa-postgresql" aria-hidden="true"></i>
                             </a>
-                            <em><a class="white no-u">Build using: </a></em>
+                            <em><a class="white no-u">Build using:</a></em>
                         </div>
                     </div>
                 </div>

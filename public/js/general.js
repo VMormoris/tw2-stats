@@ -144,7 +144,9 @@ function build_url_params(reqobj)
         (//Ingore default values
             (prop === 'page' && value === 1 ) ||
             (prop === 'filter' && value === '') ||
-            (prop === 'items' && value === 12)
+            (prop === 'items' && value === 12) ||
+            (prop === 'view' && value === 'overview') ||
+            (prop === 'show' && value === 'all')
         ) continue;
         params += (first ? '?' : '&') + `${prop}=${value}`;
         if(first) first = false;

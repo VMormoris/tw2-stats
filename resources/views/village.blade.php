@@ -1,5 +1,9 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="Checkout {{ $name }}'s information on world: [{{ $world }}]" key="description"/>
+@endsection
+
 @section('resources')
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>

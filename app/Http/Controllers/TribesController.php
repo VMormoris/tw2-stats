@@ -23,9 +23,15 @@ class TribesController extends Controller
     /**
      * Creates a page for a specific tribe
      * @param string $world Name of the world
+     * @param Illuminate\Http\Request $req Object containing the http request
      * @return Illuminate\Contracts\View\View A view containing a page for specific tribe 
      */
-    public function show($world) { return view('tribe', ['world' => $world, 'page' => $this->page]); }
+    public function show($world, Request $req)
+    {
+        $id = intval($req->input('id', 0));
+        $name = $this->service->name($world, $id)['name'];
+        return view('tribe', ['world' => $world, 'page' => $this->page, 'name' => $name]);
+    }
 
     /**
      * Handles request for subset of tribes' leaderboard

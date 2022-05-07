@@ -1,12 +1,11 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="Checkout {{ $name }}'s information on world: [{{ $world }}]" key="description"/>
+@endsection
+
 @section('resources')
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
-<!-- Core theme JS-->
 <script src="/js/general.js"></script>
-<script src="/js/table.js"></script>
-<script src="/js/tribe.js"></script>
 @endsection
 
 @section('nav-links')
@@ -18,6 +17,11 @@
 @endsection
 
 @section('content')
+<div id="app">
+    <tribe name="{{ $name }}"></tribe>
+</div>
+<script src="{{ asset('/js/app.js') }}"></script>
+<!--
 <div class="container subpage-container" id="overview">
 
     <nav class="mt-5" style="--bs-breadcrumb-divider: '';" aria-label="breadcrumb">
@@ -583,4 +587,5 @@
     </div>
 
 </div>
+-->
 @endsection

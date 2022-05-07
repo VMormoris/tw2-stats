@@ -33,6 +33,8 @@ onMounted(() => {
     const params = get_params(document.location.search);
     if(params.hasOwnProperty('id'))
     {
+        lastcrumb.value['name'] += 's';
+        lastcrumb.value['url'] += 's';
         crumbs.value.push(lastcrumb.value);
         url += `?id=${params['id']}`;
         lastcrumb.value = { 'name': props.name, 'url': url };
@@ -66,7 +68,7 @@ onMounted(() => {
         }
         else if(lastpage === 'tribe')
         {
-            const map = { 'overview': 'Overview', 'history': 'History', 'conquers': 'Conquers', 'stats': 'Conquers Stats', 'members': 'Member', 'changes': 'Member Changes' };
+            const map = { 'overview': 'Overview', 'history': 'History', 'conquers': 'Conquers', 'stats': 'Conquers Stats', 'members': 'Members', 'changes': 'Member Changes' };
             lastcrumb.value = { 'name': map[view], 'url': url };
             lastcrumb.value = { 'name': map[view], 'url': url };
             if(view === 'conquers')
@@ -87,8 +89,8 @@ onMounted(() => {
 </script>
 
 <template>
-<div class="mt-5">
-    <nav aria-label="breadcrumb">
+<div class="mt-4 ml-breadcrumb">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item" v-for="crumb in crumbs" :key="crumb.name">
             <a :href="crumb.url">{{crumb.name}}</a>

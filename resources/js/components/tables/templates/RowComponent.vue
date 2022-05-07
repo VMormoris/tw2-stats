@@ -28,7 +28,7 @@ onMounted(() => {
 
 <template>
     <tr>
-        <th v-if="hflag" scope="col">{{ header }}</th><!-- This th will make row number bold -->
+        <th v-if="hflag" scope="col" v-html="header"></th><!-- This th will make row number bold -->
         <td v-for="value in data" :key="value" v-html="value"></td>
     </tr>
 </template>

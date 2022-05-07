@@ -1,5 +1,9 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="Overview of the world: [{{ $world }}] {{ $name }}" key="description"/>
+@endsection
+
 @section('resources')
 <script src="/js/general.js"></script>
 @endsection

@@ -46,37 +46,37 @@ onMounted(()=>{
     <table class="table table-bordered mt-2">
       <thead class="thead-dark">
         <tr>
-          <th>Players:</th>
+          <th scope="col">Players:</th>
           <td id="player_num"> {{ data.players }}</td>
         </tr>
       </thead>
       <thead class="thead-dark">
         <tr>
-          <th>Tribes:</th>
+          <th scope="col">Tribes:</th>
           <td id="tribe_num">{{ data.tribes }}</td>
         </tr>
       </thead>
       <thead class="thead-dark">
         <tr>
-          <th>Villages:</th>
+          <th scope="col">Villages:</th>
           <td id="village_num">{{ data.villages }}</td>
         </tr>
       </thead>
       <thead class="thead-dark">
         <tr>
-          <th>Win Condition:</th>
+          <th scope="col">Win Condition:</th>
           <td id="win_cond">{{ data.wcond }}</td>
         </tr>
       </thead>
       <thead class="thead-dark">
         <tr>
-          <th>Starting date:</th>
+          <th scope="col">Starting date:</th>
           <td id="start">{{ data.start }}</td>
         </tr>
       </thead>
       <thead class="thead-dark">
         <tr>
-          <th>Ending date:</th>
+          <th scope="col">Ending date:</th>
           <td id="end">{{ data.end }}</td>
         </tr>
       </thead>

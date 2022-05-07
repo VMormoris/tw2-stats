@@ -44,8 +44,25 @@ class PlayerService
         //Execute query and get the required results
         $count = $players->count();
         $players = $players->skip($offset)->take($items)->get();
-        
-        return array('total' => $count, 'data' => $players);
+
+        //Extra details(aka yesterday's rankno)
+        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
+        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
+        $details = PlayerHistory::on($world)->select(
+            'pid AS id',
+            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->whereIn('pid', function($query) use(&$filter, $offset, $items){
+            $query->select('id')->from('players')
+                ->where('nname', 'like', $filter)
+                ->where('id', '!=', 0)
+                ->orderBy('rankno', 'ASC')
+                ->skip($offset)
+                ->take($items);
+        })->whereBetween('timestamp', [$start, $end])
+            ->groupBy('pid')
+            ->get();
+
+        return array('total' => $count, 'data' => $players, 'details' => $details);
     }
 
     /**

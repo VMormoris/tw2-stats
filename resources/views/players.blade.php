@@ -1,5 +1,9 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="Players' leaderboard on world: [{{ $world }}]" key="description"/>
+@endsection
+
 @section('resources')
 <!-- Core theme JS-->
 <script src="/js/general.js"></script>

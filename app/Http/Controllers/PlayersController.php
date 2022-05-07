@@ -26,9 +26,15 @@ class PlayersController extends Controller
     /**
      * Creates a page for a specific player
      * @param string $world Name of the world
+     * @param Illuminate\Http\Request $req Object containing the http request
      * @return Illuminate\Contracts\View\View A view containing a page for specific player 
      */
-    public function show(string $world) { return view('player', ['world' => $world, 'page' => $this->page]); }
+    public function show(string $world, Request $req)
+    {
+        $id = intval($req->input('id', 0));
+        $name = $this->service->name($world, $id)['name'];
+        return view('player', ['world' => $world, 'page' => $this->page, 'name' => $name]);
+    }
 
     /**
      * Handles request for subsets of players' leaderboards
