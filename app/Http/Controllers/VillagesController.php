@@ -26,9 +26,15 @@ class VillagesController extends Controller
     /**
      * Creates a page for a specific village
      * @param string $world Name of the world
+     * @param Illuminate\Http\Request $req Object containing the http request that made to the server
      * @return Illuminate\Contracts\View\View A view containing a page for specific village 
      */
-    public function show(string $world) { return view('village', ['world' => $world, 'page' => $this->page]); }
+    public function show(string $world, Request $req)
+    {
+        $id = intval($req->input('id', 0));
+        $name = $this->service->name($world, $id)['name'];
+        return view('village', ['world' => $world, 'page' => $this->page, 'name' => $name ]);
+    }
 
     /**
      * Handles request for a subset of world conquers
@@ -70,13 +76,13 @@ class VillagesController extends Controller
         $offset = ($page - 1) * $items;
 
         //Respond according to the given view input
-        if($view == 'overview')
+        if($view === 'overview')
             return $this->service->overview($world, $id);
-        else if($view == 'history')
+        else if($view === 'history')
             return $this->service->history($world, $id, $offset, $items);
-        else if($view == 'conquers')
+        else if($view === 'conquers')
             return $this->service->conquers($world, $id, $filter, $offset, $items);
-        else if($view == 'name')
+        else if($view === 'name')
             return $this->service->name($world, $id);
         else
             return array('error' => 'Use of unrecognized view parameter');

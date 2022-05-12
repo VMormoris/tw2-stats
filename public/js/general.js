@@ -1,3 +1,5 @@
+//Variable that holds all global variables to shared between components
+const globals = {};
 
 /**
  * Performs a get request with the specified arguments
@@ -78,9 +80,10 @@ function get_params(url)
 function extract_world(url)
 {
     const start = url.indexOf('/', 9) + 1;
-    const end = url.indexOf('/', start);
-    const length = end === -1 ? url.length : end-start;
-    return url.substr(start, length);
+    const endindex = url.indexOf('/', start);
+    const hashtag = url.charAt(url.length-1) === '#';
+    const end = endindex === -1 ? url.length : endindex;
+    return url.substring(start, hashtag ? end - 1 : end);
 }
 
 /**
@@ -89,3 +92,77 @@ function extract_world(url)
  * @returns {string} String containing the number in a human friendly form 
  */
 function format(num) { return (num).toLocaleString('en-us'); }
+
+/**
+ * Transforms a given string to it's formal equivalent. It basically Capitalizes
+ *  the first letter of the string.
+ * @param {string} str String to be formalized 
+ * @returns {string} The formal equivalent string
+ */
+function formalize(str) { return str.charAt(0).toUpperCase() + str.substring(1); }
+
+/**
+ * Creates a date label base on the given timestamp 
+ * @param {number} timestamp Unix like timestamp in miliseconds
+ * @returns {string[]} Two string in an array containg the date and time respectively
+ */
+function createDateLabel(timestamp)
+{
+    const date = new Date(timestamp);
+    let datestr = '';
+    if(date.getDate() < 10)
+        datestr += '0';
+    datestr += date.getDate() + '/';
+    if(date.getMonth() + 1 < 10)
+        datestr += '0';
+    datestr += (date.getMonth() + 1) + '/' + date.getFullYear();
+     
+    let timestr = '';
+    if(date.getHours()<10)
+        timestr += '0';
+    timestr += date.getHours() + ':';
+    if(date.getMinutes()<10)
+        timestr += '0';
+    timestr += date.getMinutes() + ':';
+    if(date.getSeconds()<10)
+        timestr += '0';
+    timestr += date.getSeconds();
+    return [datestr, timestr];
+}
+
+ /**
+  * Creates a human readable string represantation for the given timestamp
+  * @param {number} timestamp Unix like timestamp in miliseconds
+  * @return {string} The date that was represented by the timestamp in human readable form
+  */
+function asString(timestamp)
+{
+    const strings = createDateLabel(timestamp);
+    return strings[0] + ' ' + strings[1];
+}
+
+/**
+ * Sets the url parameters for the given user input
+ */
+function build_url_params(reqobj)
+{
+    let params = '';
+    let first = true;
+    for(const prop in reqobj)
+    {
+        const value = reqobj[prop];
+        if
+        (//Ingore default values
+            (prop === 'page' && value === 1 ) ||
+            (prop === 'filter' && value === '') ||
+            (prop === 'items' && value === 12) ||
+            (prop === 'view' && value === 'overview') ||
+            (prop === 'show' && value === 'all')
+        ) continue;
+        params += (first ? '?' : '&') + `${prop}=${value}`;
+        if(first) first = false;
+    }
+
+    const fullurl = document.location.pathname + params;
+    window.history.replaceState(null, null, fullurl);
+}

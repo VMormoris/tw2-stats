@@ -1,5 +1,9 @@
 @extends('layouts.basic')
 
+@section('meta')
+<meta name="og:description" content="An open source tool that provides statistics for the online browser game Tribal Wars 2." key="description"/>
+@endsection
+
 @section('nav-links')
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
 <li class="nav-item"><a class="nav-link" href="/en69">en69</a></li>

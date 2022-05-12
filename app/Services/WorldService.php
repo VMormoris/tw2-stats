@@ -63,7 +63,8 @@ class WorldService
 
         return array(
             'top5' => $best5,
-            'history' => $history
+            'history' => $history,
+            'count' => $this->domination_villages($world)
         );
     }
 
@@ -96,7 +97,8 @@ class WorldService
 
         return array(
             'top5' => $best5,
-            'history' => $history
+            'history' => $history,
+            'count' => $this->domination_villages($world)
         );
     }
 
@@ -127,6 +129,18 @@ class WorldService
         return array(
             'top5' => $best5
         );
+    }
+
+    /**
+     * Getter for the village owned by the 10 top tribes on a specified world
+     * @param string $world Name of the world (in game ID)
+     * @return int Number of the villages
+     */
+    private function domination_villages(string $world)
+    {
+        return Village::on($world)->whereIn('tid', function($query){
+            $query->select('id')->from('tribes')->where('rankno', '<=', 10)->where('active', '=', true);
+        })->count();
     }
 
     /**

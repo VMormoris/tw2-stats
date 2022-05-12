@@ -26,9 +26,15 @@ class PlayersController extends Controller
     /**
      * Creates a page for a specific player
      * @param string $world Name of the world
+     * @param Illuminate\Http\Request $req Object containing the http request
      * @return Illuminate\Contracts\View\View A view containing a page for specific player 
      */
-    public function show(string $world) { return view('player', ['world' => $world, 'page' => $this->page]); }
+    public function show(string $world, Request $req)
+    {
+        $id = intval($req->input('id', 0));
+        $name = $this->service->name($world, $id)['name'];
+        return view('player', ['world' => $world, 'page' => $this->page, 'name' => $name]);
+    }
 
     /**
      * Handles request for subsets of players' leaderboards
@@ -72,19 +78,19 @@ class PlayersController extends Controller
         $offset = ($page - 1) * $items;
 
         //Respond according to the given view input
-        if($view == 'overview')
+        if($view === 'overview')
             return $this->service->overview($world, $id);
-        else if($view == 'history')
+        else if($view === 'history')
             return $this->service->history($world, $id, $offset, $items);
-        else if($view == 'conquers')
+        else if($view === 'conquers')
             return $this->service->conquers($world, $id, $show, $filter, $offset, $items);
-        else if($view == 'villages')
+        else if($view === 'villages')
             return $this->service->villages($world, $id, $filter, $offset, $items);
-        else if($view == 'changes')
+        else if($view === 'changes')
             return $this->service->changes($world, $id, $offset, $items);
-        else if($view == 'stats')
+        else if($view === 'stats')
             return $this->service->stats($world, $id, $spec);
-        else if($view == 'name')
+        else if($view === 'name')
             return $this->service->name($world, $id);
         else
             return array('error' => 'Use of unrecognized view parameter');

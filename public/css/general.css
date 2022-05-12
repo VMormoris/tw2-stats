@@ -30,6 +30,7 @@ html, body
   transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   margin-right: 1px;
 }
+
 .classicform
 {
   width: 60%;
@@ -80,6 +81,21 @@ html, body
 
 .fa { font-size: small !important;}
 
+.fa-postgresql, .fa-laravel, .fa-bootstrap, .fa-fork-awesome{
+  font-size: 37px !important;
+  padding: 0rem 0.25rem;
+  vertical-align: middle;
+}
+
+.icon {
+  height: 32px;
+  padding: 0rem 0.25rem;
+}
+
+.fa-postgresql { color: #336791; }
+.fa-laravel { color: #f9322c; }
+.fa-bootstrap { color: #7e12f9; }
+
 .nav-fa
 {
   color: white;
@@ -87,9 +103,15 @@ html, body
   padding: 0px 5px 0px 5px;
 }
 
+.fa-spinner
+{
+  font-size: 64px !important;
+  margin: 5rem 0rem;
+}
+
 .fa-btn { font-size: 16px !important; }
 
-.full-height { height: calc(100% - 128px); }
+.full-height { height: calc(100% - 127.5px); }
 
 .btn-rounded
 {
@@ -124,5 +146,35 @@ html, body
 .btn-custom-link:hover { color: white; }
 
 .pl-2 { padding-left: 0.25rem; }
-
+.ml-2 { margin-left: 0.25rem; }
 .ml-5 { margin-left: 0.5rem; }
+.ml-breadcrumb { margin-left: 1.1rem; }
+
+.mb-1 { margin-bottom: 0.1rem;}
+.mb-2 { margin-bottom: 0.25rem; }
+.mb-5 { margin-bottom: 0.5rem; }
+.page-link:hover { cursor: pointer; }
+
+.white { color: white; }
+.white:hover { color: white; }
+.no-u { text-decoration: none; }
+.mw-840 { max-width: 840px !important; }
+
+.lh-37 { line-height: 37px; }
+
+.text-warning span
+{
+  background: #ffc107;
+  height: 3px;
+  width: 9px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.disclaimer
+{
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  width: 235px;
+  padding: 0px 8px;
+}
