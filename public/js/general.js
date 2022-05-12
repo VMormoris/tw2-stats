@@ -130,6 +130,17 @@ function createDateLabel(timestamp)
     return [datestr, timestr];
 }
 
+ /**
+  * Creates a human readable string represantation for the given timestamp
+  * @param {number} timestamp Unix like timestamp in miliseconds
+  * @return {string} The date that was represented by the timestamp in human readable form
+  */
+function asString(timestamp)
+{
+    const strings = createDateLabel(timestamp);
+    return strings[0] + ' ' + strings[1];
+}
+
 /**
  * Sets the url parameters for the given user input
  */

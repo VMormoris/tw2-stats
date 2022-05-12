@@ -16,7 +16,7 @@ const headers = ref({
 const loadingTribe = ref(true);
 const loadingPlayer = ref(true);
 const graphdata = ref({'tribe': { }, 'player': { } });
-const options = ref({scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}, y:{ reverse: true, ticks:{ stepSize: 1 } }},plugins:{tooltip:{callbacks:{label: function(ctx){const label = ctx.dataset.label || '';return label + ': ' + format(ctx.parsed.y) + ' at ' + asString(ctx.parsed.x);}}}}});
+const options = ref({scales:{x:{ticks:{callback: function(val, index){ return index % 3 === 0 ? createDateLabel(parseInt(val)) : '';}}}, y:{ reverse: true, ticks:{ stepSize: 1 } }}});
 
 onMounted(() => {
     const url = document.location.href;
@@ -67,7 +67,8 @@ function updateRankAndGraph(endpoint, obj)
             'data': [],
             'backgroundColor': colorpalette[index],
             'borderColor': colorpalette[index],
-            'showLine': true
+            'showLine': true,
+            'pointRadius': 0
         });
     });
 

@@ -7,7 +7,7 @@ const props = defineProps({
 <template>
 <div>
     <input type="radio" class="btn-check ipp" name="options-outlined" id="ipp12" autocomplete="off" @click="$emit('itemsChange', 12)" :checked="props.items == 12 ? 'true' : null">
-    <label class="btn btn-outline-primary ml-2" for="ipp12">12</label>
+    <label class="btn btn-outline-primary" for="ipp12">12</label>
             
     <input type="radio" class="btn-check ipp" name="options-outlined" id="ipp25" autocomplete="off" @click="$emit('itemsChange', 25)" :checked="props.items == 25 ? 'true' : null">
     <label class="btn btn-outline-primary ml-2" for="ipp25">25</label>

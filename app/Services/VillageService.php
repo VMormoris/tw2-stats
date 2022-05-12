@@ -81,7 +81,7 @@ class VillageService
             'timestamp'
         )->where('vid', '=', $id)
             ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
-            ->orderBy('timestamp', 'DESC')
+            ->orderBy('timestamp')
             ->get();
         
         return array('details' => $village, 'graphs_data' => $history);

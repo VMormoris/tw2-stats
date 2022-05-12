@@ -99,14 +99,14 @@ class PlayerService
             'timestamp'
         )->where('pid', '=', $id)
             ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
-            ->orderBy('timestamp', 'DESC')->get();
+            ->orderBy('timestamp')->get();
         
         $villages = PlayerHistory::on($world)->select(
             'villages',
             'timestamp'
         )->where('pid', '=', $id)
             ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp', 'DESC')->take(8)->get();
+            ->orderBy('timestamp')->take(8)->get();
 
         return array(
             'details' => $player, 
@@ -216,10 +216,14 @@ class PlayerService
             'villages.x', 'villages.y',
             'conquers.prevpid', 'pl1.name AS old owner',
             'conquers.nextpid', 'pl2.name AS new owner',
+            'conquers.prevtid', 'tr1.name AS old tribe',
+            'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
         )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
             ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
+            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
+            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
             ->join('villages', 'villages.id', '=', 'conquers.vid')
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
@@ -260,9 +264,13 @@ class PlayerService
             'villages.x', 'villages.y',
             'conquers.prevpid',
             'conquers.nextpid', 'players.name AS new owner',
+            'conquers.prevtid', 'tr1.name AS old tribe',
+            'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
         )->join('players', 'players.id', '=', 'conquers.nextpid')
+            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
+            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
             ->join('villages', 'villages.id', '=', 'conquers.vid')
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
@@ -300,9 +308,13 @@ class PlayerService
             'villages.x', 'villages.y',
             'conquers.prevpid', 'players.name AS old owner',
             'conquers.nextpid',
+            'conquers.prevtid', 'tr1.name AS old tribe',
+            'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
         )->join('players', 'players.id', '=', 'conquers.prevpid')
+            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
+            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
             ->join('villages', 'villages.id', '=', 'conquers.vid')
             ->where(function($query) use ($filter){
                 $query->where('conquers.nname', 'like', $filter)
@@ -361,13 +373,13 @@ class PlayerService
      */
     public function stats(string $world, int $id, string $spec)
     {
-        if($spec === 'pvt_gains')
+        if($spec === 'gvt')
             return $this->pvt_gains($world, $id);
-        else if($spec === 'pvt_losses')
+        else if($spec === 'lvt')
             return $this->pvt_losses($world, $id);
-        else if($spec === 'pvp_gains')
+        else if($spec === 'gvp')
             return $this->pvp_gains($world, $id);
-        else if($spec === 'pvp_losses')
+        else if($spec === 'lvp')
             return $this->pvp_losses($world, $id);
         else
             return array('error' => 'Use of unrecognized stats specification');
@@ -394,7 +406,7 @@ class PlayerService
          *       GROUP BY prevtid
          *       ORDER BY "gains" DESC
          *   )
-         *   SELECT pvt_gains."num", tr.name AS "name", pvt_gains."gains" FROM pvt_gains
+         *   SELECT pvt_gains."num", tr.id, tr.name AS "name", pvt_gains."gains" FROM pvt_gains
          *   INNER JOIN tribes AS tr ON tr.id = pvt_gains."tid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -413,6 +425,7 @@ class PlayerService
         $best6 = DB::connection($world)->table('pvt_gains')
         ->select(
             'pvt_gains.num AS num',
+            'tr.id AS id',
             'tr.name AS name',
             'pvt_gains.gains AS gains'
         )->withExpression('pvt_gains', $pvt_gains)
@@ -428,6 +441,7 @@ class PlayerService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(pvt_gains.gains) AS gains
                     ')
@@ -437,7 +451,7 @@ class PlayerService
                     ->orderBy('num');
         }
 
-        return array('pvt_gains' => $result->get());
+        return array('gvt' => $result->get());
     }
 
     /**
@@ -461,7 +475,7 @@ class PlayerService
          *       GROUP BY nexttid
          *       ORDER BY "losses" DESC
          *   )
-         *   SELECT pvt_losses."num", tr.name AS "name", pvt_losses."losses" FROM pvt_losses
+         *   SELECT pvt_losses."num", tr,id, tr.name AS "name", pvt_losses."losses" FROM pvt_losses
          *   INNER JOIN tribes AS tr ON tr.id = pvt_losses."tid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -480,6 +494,7 @@ class PlayerService
         $best6 = DB::connection($world)->table('pvt_losses')
         ->select(
             'pvt_losses.num AS num',
+            'tr.id AS id',
             'tr.name AS name',
             'pvt_losses.losses AS losses'
         )->withExpression('pvt_losses', $pvt_losses)
@@ -495,6 +510,7 @@ class PlayerService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(pvt_losses.losses) AS losses
                     ')
@@ -503,7 +519,7 @@ class PlayerService
                     ->union($best6)
                     ->orderBy('num');
         }        
-        return array('pvt_losses' => $result->get());
+        return array('lvt' => $result->get());
     }
 
     /**
@@ -526,7 +542,7 @@ class PlayerService
          *       GROUP BY prevpid
          *       ORDER BY "gains" DESC
          *   )
-         *   SELECT pvp_gains."num", pl.name AS "name", pvp_gains."gains" FROM pvp_gains
+         *   SELECT pvp_gains."num", pl.id, pl.name AS "name", pvp_gains."gains" FROM pvp_gains
          *   INNER JOIN players AS pl ON pl.id = pvp_gains."pid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -545,6 +561,7 @@ class PlayerService
         $best6 = DB::connection($world)->table('pvp_gains')
             ->select(
                 'pvp_gains.num AS num',
+                'pl.id AS id',
                 'pl.name AS name',
                 'pvp_gains.gains AS gains'
             )->withExpression('pvp_gains', $pvp_gains)
@@ -560,6 +577,7 @@ class PlayerService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(pvp_gains.gains) AS gains
                     ')
@@ -568,7 +586,7 @@ class PlayerService
                     ->union($best6)
                     ->orderBy('num');
         }
-        return array('pvp_gains' => $result->get());
+        return array('gvp' => $result->get());
     }
     
     /**
@@ -591,7 +609,7 @@ class PlayerService
          *       GROUP BY nextpid
          *       ORDER BY "losses" DESC
          *   )
-         *   SELECT pvp_losses."num" AS "num", pl.name AS "name", pvp_losses."losses" FROM pvp_losses
+         *   SELECT pvp_losses."num" AS "num", pl.id, pl.name AS "name", pvp_losses."losses" FROM pvp_losses
          *   INNER JOIN players AS pl ON pl.id = pvp_losses."pid"
          *   WHERE "num" BETWEEN 1 AND 6
          *   UNION
@@ -610,6 +628,7 @@ class PlayerService
         $best6 = DB::connection($world)->table('pvp_losses')
             ->select(
                 'pvp_losses.num AS num',
+                'pl.id AS id',
                 'pl.name AS name',
                 'pvp_losses.losses AS losses'
             )->withExpression('pvp_losses', $pvp_losses)
@@ -625,6 +644,7 @@ class PlayerService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(pvp_losses.losses) AS losses
                     ')
@@ -633,7 +653,7 @@ class PlayerService
                     ->union($best6)
                     ->orderBy('num');
         }
-        return array('pvp_losses' => $result->get());
+        return array('lvp' => $result->get());
     }
 
     /**

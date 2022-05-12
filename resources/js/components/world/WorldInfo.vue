@@ -1,15 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import InfoTable from '../tables/templates/InfoTable.vue';
 
-const data = ref({
-  'players': 0,
-  'tribes': 0,
-  'villages': 0,
-  'wcond': '',
-  'start': '',
-  'end': 'TBA'
-});
-
+const info = ref([]);
 
 onMounted(()=>{
   const url = document.location.href;
@@ -23,12 +16,12 @@ onMounted(()=>{
     const end = obj['end'] === null ? 'TBA' : new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
 
     //Update webpage
-    data.value['players'] = format(obj['players']);
-    data.value['tribes'] = format(obj['tribes']);
-    data.value['villages'] = format(obj['villages']);
-    data.value['wcond'] = wcond;
-    data.value['start'] = start;
-    data.value['end'] = end;
+    info.value.push({ 'Players': format(obj['players']) });
+    info.value.push({ 'Tribes': format(obj['tribes']) });
+    info.value.push({ 'Villages': format(obj['villages']) });
+    info.value.push({ 'Win Condition': wcond });
+    info.value.push({ 'Starting Date': start });
+    info.value.push({ 'Ending Date': end });
         
     //Store variable for later use
     globals.wcond = obj['win_condition'];
@@ -43,43 +36,6 @@ onMounted(()=>{
     <div class="text-center mt-2">
       <strong><a style="font-size: 20px">General Information</a></strong>
     </div>
-    <table class="table table-bordered mt-2">
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Players:</th>
-          <td id="player_num"> {{ data.players }}</td>
-        </tr>
-      </thead>
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Tribes:</th>
-          <td id="tribe_num">{{ data.tribes }}</td>
-        </tr>
-      </thead>
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Villages:</th>
-          <td id="village_num">{{ data.villages }}</td>
-        </tr>
-      </thead>
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Win Condition:</th>
-          <td id="win_cond">{{ data.wcond }}</td>
-        </tr>
-      </thead>
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Starting date:</th>
-          <td id="start">{{ data.start }}</td>
-        </tr>
-      </thead>
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">Ending date:</th>
-          <td id="end">{{ data.end }}</td>
-        </tr>
-      </thead>
-    </table>
+    <info-table :info="info"></info-table>
   </div>
 </template>

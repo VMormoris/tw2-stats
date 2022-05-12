@@ -114,10 +114,11 @@ function Update(obj)
         {
             const offsets = { 'points': row['points'] - nextrow['points'] };
             const pointstr = `<a>${format(row['points'])}</a>${pretify(offsets['points'])}`;
-            const owner = row['pid'] === 0 ? row['owner'] : `<a href="/${world}/player?id=${row['pid']}>${row['owner']}</a>`;
+            const owner = row['pid'] === 0 ? row['owner'] : `<a href="/${world}/player?id=${row['pid']}">${row['owner']}</a>`;
             
             obj['rows'].push({
                 'num': num,
+                'name': `${row['name']} (${row['x']}|${row['y']})`,
                 'owmer': owner,
                 'points': pointstr,
                 'timestamp': row.timestamp
@@ -140,7 +141,7 @@ function pretify(offset)
         style = 'text-danger';
         symbol = '';
     }
-    return `<a class="${style}">(${symbol}${offset})</a>`;
+    return `<a class="${style}">(${symbol}${format(offset)})</a>`;
 }
 
 </script>
@@ -152,7 +153,7 @@ function pretify(offset)
 <interactive-table
     :headers="headers[props.endpoint]"
     :hasSearchbar="false"
-    @update="Update"
->
+    :isHistory="true"
+    @update="Update">
 </interactive-table>
 </template>

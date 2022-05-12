@@ -4,6 +4,10 @@
 <meta name="og:description" content="The privacy policy document that contains essential information about the collection of your data and use of cookies by tw2-stats." key="description"/>
 @endsection
 
+@section('resources')
+<script src="/js/general.js"></script>
+@endsection
+
 @section('nav-links')
 <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
 <li class="nav-item"><a class="nav-link" href="/en69">en69</a></li>
@@ -19,11 +23,12 @@
 
         <breadcrumb :name="''"></breadcrumb>
 
-        <div class="text-center mt-5">
+        <div class="text-center mt-2">
             <h1>Privacy Policy</h1>
         </div>
 
         <div class="container mw-840 mt-5 mb-5">
+            <h3>Introduction</h3>
             <p>
                 We at tw2-stats, accessible from tw2-stats.com, don't want your personal 
                 data. You should also know that <strong>will never sell any information 
@@ -51,7 +56,7 @@
                     <li><strong>XSRF-token:</strong> This cookie validates the user session
                     and is necessary to guarantee safety during the website visit to avoid 
                     a cross-site request forgery.</li>
-                    <li><strong>Session cookie</strong> This is a unique cookie to identify a 
+                    <li><strong>Session cookie:</strong> This is a unique cookie to identify a 
                     specific website visitor for the duration of his visit (session).</li>
                 </ul>
                 <strong>Why we use cookies?</strong><br>

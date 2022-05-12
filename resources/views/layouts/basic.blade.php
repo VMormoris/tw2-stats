@@ -13,6 +13,7 @@
         <meta name="theme-color" content="" key="theme-color"/>
         -->
         @yield('meta')
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="author" content=""/>
         <!--<meta name="csrf-token" content="{{ csrf_token() }}">-->
         <title>{{ $page }} - tw2 stats</title>
@@ -59,7 +60,7 @@
                     </div>
                     <div class="col">
                         <div class="d-flex flex-row-reverse">
-                            <em><a class="white ml-2 no-u"> and </a><a class="white" href="#">others</a></em>
+                            <em><a class="white ml-2 no-u"> and </a><a class="white" href="https://github.com/VMormoris/tw2-stats/blob/main/tools.md">others</a></em>
                             <!-- Fork Awesome -->
                             <a class="white" href="https://forkaweso.me/Fork-Awesome/">
                                 <i class="fa fa-fork-awesome" aria-hidden="true"></i>

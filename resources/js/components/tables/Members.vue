@@ -29,7 +29,7 @@ function Update(obj)
         details.forEach((item) => {
             const id = item['id'];
             delete item.id;
-            data.forEach((row) => {
+            rows.forEach((row) => {
                 if(row['id'] === id)
                 {
                     for(const prop in item)
@@ -72,6 +72,7 @@ function Update(obj)
 <interactive-table
     :headers="headers"
     :searchBarHint="'Search Member'"
+    :hasDetails="true"
     @update="Update">
 </interactive-table>
 </template>

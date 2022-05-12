@@ -35,7 +35,7 @@ function Update(obj)
             details.forEach((item) => {
                 const id = item['id'];
                 delete item.id;
-                data.forEach((row) => { 
+                rows.forEach((row) => { 
                     if(row['id'] === id)
                     {
                         for(const prop in item)
@@ -45,14 +45,14 @@ function Update(obj)
             });
         }
 
-        const offset = (obj['page'] - 1) * obj['items'];
+        const offset = (obj['page'] - 1) * obj['items']+1;
         rows.forEach((row, index) => {
             if(props.endpoint === 'tribes')
                 UpdateTribes(row);
             else if(props.endpoint === 'players')
                 UpdatePlayers(row);
             else if(props.endpoint === 'villages')
-                UpdateVillages(row, offset+index+1);
+                UpdateVillages(row, offset+index);
         });
 
         function UpdateVillages(row, num)
@@ -133,6 +133,7 @@ function Update(obj)
 <interactive-table
     :headers="headers[props.endpoint]"
     :searchBarHint="props.placeholder"
+    :hasDetails="props.endpoint!='villages'"
     @update="Update">
 </interactive-table>
 

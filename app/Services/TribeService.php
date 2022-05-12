@@ -117,7 +117,7 @@ class TribeService
             'timestamp'
         )->where('tid', '=', $id)
             ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
-            ->orderBy('timestamp', 'DESC')
+            ->orderBy('timestamp')
             ->get();
 
         $villages = TribeHistory::on($world)->select(
@@ -125,7 +125,7 @@ class TribeService
             'timestamp'
         )->where('tid', '=', $id)
             ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp', 'DESC')->take(8)->get();
+            ->orderBy('timestamp')->take(8)->get();
         
         $tribe['conquers'] = array(
             'all' => $all,
@@ -500,13 +500,13 @@ class TribeService
      */
     public function stats(string $world, int $id, string $spec)
     {
-        if($spec === 'tvt_gains')
+        if($spec === 'gvt')
             return $this->tvt_gains($world, $id);
-        else if($spec === 'tvt_losses')
+        else if($spec === 'lvt')
             return $this->tvt_losses($world, $id);
-        else if($spec === 'tvp_gains')
+        else if($spec === 'gvp')
             return $this->tvp_gains($world, $id);
-        else if($spec === 'tvp_losses')
+        else if($spec === 'lvp')
             return $this->tvp_losses($world, $id);
         else
             return array('error' => 'Use of unrecognized stats specification');
@@ -533,7 +533,7 @@ class TribeService
          *       GROUP BY prevtid
          *       ORDER BY "gains" DESC
          *   )
-         *   SELECT tvt_gains."num", tr.name AS "name", tvt_gains."gains" FROM tvt_gains
+         *   SELECT tvt_gains."num", tr.id, tr.name AS "name", tvt_gains."gains" FROM tvt_gains
          *   INNER JOIN tribes AS tr ON tr.id = tvt_gains."tid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -552,6 +552,7 @@ class TribeService
         $best6 = DB::connection($world)->table('tvt_gains')
         ->select(
             'tvt_gains.num AS num',
+            'tr.id AS id',
             'tr.name AS name',
             'tvt_gains.gains AS gains'
         )->withExpression('tvt_gains', $tvt_gains)
@@ -567,6 +568,7 @@ class TribeService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(tvt_gains.gains) AS gains
                     ')
@@ -576,7 +578,7 @@ class TribeService
                     ->orderBy('num');
         }
 
-        return array('tvt_gains' => $result->get());
+        return array('gvt' => $result->get());
     }
 
     /**
@@ -600,7 +602,7 @@ class TribeService
          *       GROUP BY nexttid
          *       ORDER BY "losses" DESC
          *   )
-         *   SELECT tvt_losses."num", tr.name AS "name", tvt_losses."losses" FROM tvt_losses
+         *   SELECT tvt_losses."num", tr.id, tr.name AS "name", tvt_losses."losses" FROM tvt_losses
          *   INNER JOIN tribes AS tr ON tr.id = tvt_losses."tid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -619,6 +621,7 @@ class TribeService
         $best6 = DB::connection($world)->table('tvt_losses')
         ->select(
             'tvt_losses.num AS num',
+            'tr.id AS id',
             'tr.name AS name',
             'tvt_losses.losses AS losses'
         )->withExpression('tvt_losses', $tvt_losses)
@@ -634,6 +637,7 @@ class TribeService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(tvt_losses.losses) AS losses
                     ')
@@ -642,7 +646,7 @@ class TribeService
                     ->union($best6)
                     ->orderBy('num');
         }        
-        return array('tvt_losses' => $result->get());
+        return array('lvt' => $result->get());
     }
 
     /**
@@ -665,7 +669,7 @@ class TribeService
          *       GROUP BY prevpid
          *       ORDER BY "gains" DESC
          *   )
-         *   SELECT tvp_gains."num", pl.name AS "name", tvp_gains."gains" FROM tvp_gains
+         *   SELECT tvp_gains."num", pl.id, pl.name AS "name", tvp_gains."gains" FROM tvp_gains
          *   INNER JOIN players AS pl ON pl.id = tvp_gains."pid"
          *   WHERE num BETWEEN 1 AND 6
          *   UNION
@@ -684,6 +688,7 @@ class TribeService
         $best6 = DB::connection($world)->table('tvp_gains')
             ->select(
                 'tvp_gains.num AS num',
+                'pl.id AS id',
                 'pl.name AS name',
                 'tvp_gains.gains AS gains'
             )->withExpression('tvp_gains', $tvp_gains)
@@ -699,6 +704,7 @@ class TribeService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(tvp_gains.gains) AS gains
                     ')
@@ -707,7 +713,7 @@ class TribeService
                     ->union($best6)
                     ->orderBy('num');
         }
-        return array('tvp_gains' => $result->get());
+        return array('gvp' => $result->get());
     }
     
     /**
@@ -730,7 +736,7 @@ class TribeService
          *       GROUP BY nextpid
          *       ORDER BY "losses" DESC
          *   )
-         *   SELECT tvp_losses."num" AS "num", pl.name AS "name", tvp_losses."losses" FROM tvp_losses
+         *   SELECT tvp_losses."num" AS "num", pl.id, pl.name AS "name", tvp_losses."losses" FROM tvp_losses
          *   INNER JOIN players AS pl ON pl.id = tvp_losses."pid"
          *   WHERE "num" BETWEEN 1 AND 6
          *   UNION
@@ -749,6 +755,7 @@ class TribeService
         $best6 = DB::connection($world)->table('tvp_losses')
             ->select(
                 'tvp_losses.num AS num',
+                'pl.id AS id',
                 'pl.name AS name',
                 'tvp_losses.losses AS losses'
             )->withExpression('tvp_losses', $tvp_losses)
@@ -764,6 +771,7 @@ class TribeService
                 ->select(
                     DB::connection($world)->raw('
                         7 AS num,
+                        0 AS id,
                         \'Other\' AS name,
                         SUM(tvp_losses.losses) AS losses
                     ')
@@ -772,7 +780,7 @@ class TribeService
                     ->union($best6)
                     ->orderBy('num');
         }
-        return array('tvp_losses' => $result->get());
+        return array('lvp' => $result->get());
     }
 
     /**

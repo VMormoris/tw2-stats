@@ -30,6 +30,7 @@ html, body
   transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
   margin-right: 1px;
 }
+
 .classicform
 {
   width: 60%;
@@ -168,4 +169,12 @@ html, body
   width: 9px;
   display: inline-block;
   vertical-align: middle;
+}
+
+.disclaimer
+{
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  width: 235px;
+  padding: 0px 8px;
 }
