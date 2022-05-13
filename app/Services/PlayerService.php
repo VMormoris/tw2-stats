@@ -106,13 +106,13 @@ class PlayerService
             'timestamp'
         )->where('pid', '=', $id)
             ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp')->take(8)->get();
+            ->orderBy('timestamp', 'DESC')->take(8)->get();
 
         return array(
             'details' => $player, 
             'graphs_data' => array(
                 'general' => $history,
-                'villages' => $villages
+                'villages' => array_reverse($villages->toArray())
             )
         );
     }

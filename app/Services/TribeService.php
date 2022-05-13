@@ -125,7 +125,7 @@ class TribeService
             'timestamp'
         )->where('tid', '=', $id)
             ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp')->take(8)->get();
+            ->orderBy('timestamp', 'DESC')->take(8)->get();
         
         $tribe['conquers'] = array(
             'all' => $all,
@@ -138,7 +138,7 @@ class TribeService
             'details' => $tribe,
             'graphs_data' => array(
                 'general' => $history,
-                'villages' => $villages
+                'villages' => array_reverse($villages->toArray())
             )
         );
     }

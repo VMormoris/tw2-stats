@@ -40,6 +40,7 @@ function updateRankAndGraph(endpoint, obj)
     const top5 = obj['top5'];
     const history = obj['history'];
     const count = obj['count'];
+    const indexes = {};
     const datasets = [];
 
     //Setup table
@@ -62,6 +63,7 @@ function updateRankAndGraph(endpoint, obj)
         row['domination'] = globals.wcond === 'Domination' ? format(obj['villages']/count*100) + '%' : format(obj['vp']);
         rows.value[endpoint].push(row);
         
+        indexes[obj['id']] = datasets.length;
         datasets.push({
             'label': obj['name'],
             'data': [],
@@ -73,8 +75,7 @@ function updateRankAndGraph(endpoint, obj)
     });
 
     history.forEach((obj) => {
-        const index = obj['rankno'] - 1;
-        const data = datasets[index].data;
+        const data = datasets[indexes[obj['id']]].data;
         const timestamp = new Date(obj['timestamp']).getTime();
         data.push({ 'x': timestamp, 'y': obj['rankno']});
     });

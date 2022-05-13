@@ -91,7 +91,7 @@ onMounted(() => {
             const timestamp = new Date(gd['villages'][i]['timestamp']).getTime();
             graphsData.value['villages']['labels'].push(timestamp);
             if(now === yesterday)
-                graphsData.value['villages']['datasets'][0]['data'].push({ 'x': timestamp, 'y': 0 });
+                graphsData.value['villages']['datasets'][0]['data'].push({ 'x': timestamp, 'y': 0.05 });
             else if(now > yesterday)
                 graphsData.value['villages']['datasets'][1]['data'].push({ 'x': timestamp, 'y': now - yesterday});
             else
