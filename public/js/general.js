@@ -81,9 +81,8 @@ function extract_world(url)
 {
     const start = url.indexOf('/', 9) + 1;
     const endindex = url.indexOf('/', start);
-    const hashtag = url.charAt(url.length-1) === '#';
     const end = endindex === -1 ? url.length : endindex;
-    return url.substring(start, hashtag ? end - 1 : end);
+    return url.substring(start, end);
 }
 
 /**

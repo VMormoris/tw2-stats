@@ -254,14 +254,14 @@ class WorldDumper:
         players = self.__data['players']
         villages = self.__data['villages']
         print('Starting updating databases')
-        conn = pgdb.connect(database='tw2-stats', user='tw2-stats', host='127.0.0.1', password=PASSWORD)
+        conn = pgdb.connect(database='tw2-stats', user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
         cur = conn.cursor()
         cur.execute(update_world, (len(tribes), len(players), len(villages), self.__world))
         conn.commit()
         cur.close()
         conn.close()
 
-        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='127.0.0.1', password=PASSWORD)
+        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
         cur = conn.cursor()
         #Update tribes
         query = 'UPDATE tribes SET active = false WHERE true;'
@@ -304,7 +304,7 @@ class WorldDumper:
         print('Done updating databases')
 
         #Recluster database
-        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='127.0.0.1', password=PASSWORD)
+        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
         conn.set_isolation_level(pgdb.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         cur.execute('CLUSTER;')

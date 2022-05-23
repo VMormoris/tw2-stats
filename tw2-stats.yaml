@@ -1,0 +1,14 @@
+version: '3'
+services:
+  db.tw2-stats:
+    image: db.tw2-stats:latest
+    container_name: db.tw2-stats
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+  tw2-stats:
+    image: tw2-stats:0.4.x
+    container_name: website.tw2-stats
+    ports:
+      - 80:80

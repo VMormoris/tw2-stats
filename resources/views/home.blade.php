@@ -49,11 +49,16 @@
 
             <div class="container" style="width: 50%;">
                 <div class="center-content text-center">
-                    <img src="images/logo.png" alt="Logo"></img>
+                    <img src="images/logo.png" alt="Logo"/>
                 </div>
             </div>
 
         </div>
+        
+        <div class="text-center mt-5">
+            <h5>* tw2-stats  is not associated with or endorsed by InnoGames.</h5>
+        </div>
+
     </div>
 
 </div>

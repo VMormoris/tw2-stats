@@ -1,6 +1,8 @@
 ![logo](public/images/logo.png)
 
-```tw2-stats``` is a tool that provides statistics for the online browser game "Tribal Wars 2". You can find a working version of the tool at: [tw2-stats.com](https://tw2-stats.com/). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).
+```tw2-stats``` is a tool that provides statistics for the online browser game "Tribal Wars 2". You can find a working version of the tool at: [tw2-stats.com](https://tw2-stats.com/). For information about how to set it up locally visit our [wiki page](https://github.com/VMormoris/tw2-stats/wiki).<br>
+**Disclaimer:**<br>
+_Although I'm not against people using it locally for themselfs. I will highly encourage you to either help me host it or host it yourself so other community members can benefit it from it as well._
 
 ## Contributing
 * _For reporting a bug please open an issue describing the bug._
@@ -19,3 +21,5 @@
 * [ForkAwesome](https://forkaweso.me/Fork-Awesome/)
 
 If you want to **keep up with changes** or if you have **questions** that don't require opening issue come and join our [discord server](https://discord.com/invite/vxZbCrShaP).
+
+__* tw2-stats is not associated with or endorsed by InnoGames.__
