@@ -15,5 +15,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_16.x &&\
     npm install && npm run dev
 RUN apt install python3-pip -y &&\
     pip3 install python-socketio websocket-client psycopg2-binary &&\
-    cp dumper-app/config.example.json dumper-app/config.json
+    cp dumper-app/config.example.json dumper-app/config.json &&\
+    mkdir -p .cache
 RUN chown -R www-data:www-data /var/www/tw2-stats
