@@ -9,8 +9,8 @@ const world = ref('');
 const link = ref({ 'tribe': '', 'player': '' });
 const rows = ref({ 'tribe': [], 'player': []});
 const headers = ref({
-    'tribe': ['#', 'Name', 'Points', 'Members', 'Villages', 'Domination'],
-    'player': ['#', 'Name', 'Points', 'Villages', 'Domination']
+    'tribe': ['#', 'Name', 'Points', 'Members', 'Villages', 'Domination/VP'],
+    'player': ['#', 'Name', 'Points', 'Villages', 'Domination/VP']
 });
 
 const loadingTribe = ref(true);
@@ -30,6 +30,17 @@ onMounted(() => {
 
 function updateRankAndGraph(endpoint, obj)
 {
+    if(globals.wcond === 'Domination')
+    {
+        headers.value['tribe'][5] = 'Domination';
+        headers.value['player'][4] = 'Domination';
+    }
+    else
+    {
+        headers.value['tribe'][5] = 'Victory Points';
+        headers.value['player'][4] = 'Victory Points';
+    }
+
     if(endpoint === 'player')
         loadingPlayer.value = false;
     else if(endpoint === 'tribe')

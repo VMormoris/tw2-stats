@@ -46,7 +46,8 @@ class WorldService
             'name',
             'points',
             'members',
-            'villages'
+            'villages',
+            'vp'
         )->where('active', '=', true)
             ->where('id', '<>', 0)
             ->orderBy('rankno')
@@ -81,7 +82,8 @@ class WorldService
             'id',
             'name',
             'points',
-            'villages'
+            'villages',
+            'vp'
         )->where('id', '<>', 0)
             ->orderBy('rankno')
             ->take(5)
