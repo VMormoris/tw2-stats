@@ -80,7 +80,7 @@ class VillageService
             'points',
             'timestamp'
         )->where('vid', '=', $id)
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
+            ->where('timestamp', '>', now()->subDays(3)->format('Y-m-d H:i:s'))
             ->orderBy('timestamp')
             ->get();
         

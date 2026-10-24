@@ -1,0 +1,48 @@
+.git
+
+# Environment and secrets
+.env
+docker/.env
+.env.*
+!.env.example
+storage/*.key
+dumper-app/config.json
+
+# Dependencies
+node_modules
+vendor
+
+# Laravel runtime files
+public/hot
+public/storage
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/testing
+storage/framework/views
+
+# Frontend build output
+public/build
+
+# Local databases and dumper output
+database/*.sqlite*
+dumper-app/__pycache__
+dumper-app/.cache
+dumper-app/nohup.out
+
+# Local development configuration
+docker-compose.override.yml
+compose.override.yaml
+Homestead.json
+Homestead.yaml
+.idea
+.vscode
+
+# Test caches and logs
+.phpunit.cache
+.phpunit.result.cache
+npm-debug.log
+yarn-error.log
+
+# OS
+Thumbs.db

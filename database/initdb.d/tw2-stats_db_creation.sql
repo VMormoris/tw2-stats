@@ -1,6 +1,6 @@
 /* Have to DROP TABLE(s) before we DROP DOMAIN(s) */
 /* DROP TABLE(s) */
-DROP TABLE worlds;
+DROP TABLE IF EXISTS worlds;
 
 --- Unsigned int type for 2 byte integer
 DROP DOMAIN IF EXISTS uint2;

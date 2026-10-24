@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import InfoTable from '../tables/templates/InfoTable.vue';
-import { ScatterChart, BarChart } from 'vue-chart-3';
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { ScatterChart, BarChart } from '../../charts';
 
 const props = defineProps({
     'endpoint': String,
@@ -185,15 +183,15 @@ onMounted(() => {
             </div>
         </div>
         <div class="container col">
-            <ScatterChart :chartData="graphsData.points" :options="options.points" style="height: 320px"/>
-            <ScatterChart v-if="props.endpoint!='village'" :chartData="graphsData.rank" :options="options.rank" style="height: 320px"/>
+            <ScatterChart :data="graphsData.points" :options="options.points" style="height: 320px"/>
+            <ScatterChart v-if="props.endpoint!='village'" :data="graphsData.rank" :options="options.rank" style="height: 320px"/>
         </div>
     </div>
 
     <div class="text-center">Differnce in bash points in last 3 days</div>
-    <ScatterChart :chartData="graphsData.bash" :options="options.bash"/>
+    <ScatterChart :data="graphsData.bash" :options="options.bash"/>
     <div class="mt-2 mb-2">
-        <BarChart :chartData="graphsData.villages" :options="options.villages"/>
+        <BarChart :data="graphsData.villages" :options="options.villages"/>
     </div>
 </div>
 </template>

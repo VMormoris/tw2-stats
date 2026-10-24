@@ -50,8 +50,8 @@ class TribeService
         $tribes = $tribes->skip($offset)->take($items)->get();
         
         //Extra details(aka yesterday's rankno)
-        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
-        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
+        $start = now()->subDays(1)->format('Y-m-d 00:00:00');
+        $end = now()->subDays(1)->format('Y-m-d 23:00:00');
         $details = TribeHistory::on($world)->select(
             'tid AS id',
             DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(members) AS oldmembers, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
@@ -116,7 +116,7 @@ class TribeService
             'offbash', 'defbash', 'totalbash',
             'timestamp'
         )->where('tid', '=', $id)
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
+            ->where('timestamp', '>', now()->subDays(3)->format('Y-m-d H:i:s'))
             ->orderBy('timestamp')
             ->get();
 
@@ -226,8 +226,8 @@ class TribeService
         $members = $members->skip($offset)->take($items)->get();
 
         //Extra details(aka yesterday's rankno)
-        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
-        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
+        $start = now()->subDays(1)->format('Y-m-d 00:00:00');
+        $end = now()->subDays(1)->format('Y-m-d 23:00:00');
         $details = PlayerHistory::on($world)->select(
             'pid AS id',
             DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')

@@ -55,7 +55,7 @@ class WorldService
             ->get();
         //History data for graphs
         $history = TribeHistory::on($world)->select('tid AS id', 'rankno', 'timestamp')
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
+            ->where('timestamp', '>', now()->subDays(7)->format('Y-m-d H:i:s'))
             ->whereIn('tid', function($query){
                 $query->select('id')->from('tribes')->where('rankno', '<=', 5);
             })
@@ -90,7 +90,7 @@ class WorldService
             ->get();
         //History data for graphs
         $history = PlayerHistory::on($world)->select('pid AS id', 'rankno', 'timestamp')
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
+            ->where('timestamp', '>', now()->subDays(7)->format('Y-m-d H:i:s'))
             ->whereIn('pid', function($query){
                 $query->select('id')->from('players')->where('rankno', '<=', 5);
             })
