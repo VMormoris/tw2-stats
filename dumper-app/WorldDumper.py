@@ -1,6 +1,10 @@
 from tw2client import EXIT_FAILURE, tw2Client as tw2c
 import psycopg2 as pgdb
+import threading
 import time
+
+#A dump that takes longer is given up until the next hour
+TIMEOUT = 30 * 60.0
 
 upsert_tribes = '''
 INSERT INTO tribes(wid, id, name, nname, tag, active, members, points, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
@@ -74,6 +78,9 @@ class WorldDumper:
         self.__world = settings['world']
         self.__timestamp = None
         self.__state = False
+        #Set when the dump is finished or has failed
+        self.__done = threading.Event()
+        self.__failed = False
         self.__command = { 
             'type': 'Map/getVillagesByArea',
             'data': {
@@ -86,19 +93,40 @@ class WorldDumper:
         return self.__state
 
     def start(self):
-        '''Start the proccess of taking a dump
+        '''Take a dump, retrying until it's finished or has taken longer than TIMEOUT
         '''
-        ts = time.localtime()
-        self.__state = False
-        self.__timestamp = time.strftime('%Y-%m-%d %H:00:00', ts)
-        print('Attempting loggin')
-        self.__client.emit('Authentication/login', { 'name': self.__name, 'pass': self.__pass }, self.__onlogin)
-        time.sleep(10)
-        if self.__client.totalEmits() <= 2:
-            print('Queue empty!!!')
+        deadline = time.monotonic() + TIMEOUT
+        while True:
+            ts = time.localtime()
             self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__timestamp = time.strftime('%Y-%m-%d %H:00:00', ts)
+            self.__done.clear()
+            self.__failed = False
+            print('Attempting loggin')
+            self.__client.emit('Authentication/login', { 'name': self.__name, 'pass': self.__pass }, self.__onlogin)
+            time.sleep(10)
+            if self.__client.totalEmits() <= 2 and not self.__done.is_set():
+                print('Queue empty!!!')
+                self.__state = False
+                self.__client.restart(deadline)
+            elif not self.__done.wait(max(deadline - time.monotonic(), 0)):
+                break
+            elif not self.__failed:
+                return
+            else:
+                time.sleep(120.0)
+                self.__state = False
+                self.__client.restart(deadline)
+            if time.monotonic() >= deadline:
+                break
+        print('Giving up on', self.__world, 'until the next hour')
+        self.__client.disconnect()
+
+    def __fail(self):
+        '''Has start() retry the dump
+        '''
+        self.__failed = True
+        self.__done.set()
 
     def __onlogin(self, obj):
         '''Callback for autetication attempt
@@ -138,10 +166,7 @@ class WorldDumper:
         '''Callback for villages
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -177,10 +202,7 @@ class WorldDumper:
         '''Callback for tribes
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -213,10 +235,7 @@ class WorldDumper:
         '''Callback for players
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -296,3 +315,4 @@ class WorldDumper:
         cur.close()
         conn.close()
         print('Done updating databases')
+        self.__done.set()
