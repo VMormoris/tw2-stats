@@ -2,9 +2,6 @@ from tw2client import EXIT_FAILURE, tw2Client as tw2c
 import psycopg2 as pgdb
 import time
 
-#Password for tw2-stats Database user
-PASSWORD = '<your_password>'
-
 upsert_tribes = '''
 INSERT INTO tribes(wid, id, name, nname, tag, active, members, points, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
 VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -254,7 +251,8 @@ class WorldDumper:
         players = self.__data['players']
         villages = self.__data['villages']
         print('Starting updating databases')
-        conn = pgdb.connect(database='tw2-stats', user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
+        #Connects with the PG* environment variables
+        conn = pgdb.connect('')
         cur = conn.cursor()
         cur.execute(update_world, (len(tribes), len(players), len(villages), self.__world))
         conn.commit()

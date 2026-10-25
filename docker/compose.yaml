@@ -48,6 +48,27 @@ services:
       db:
         condition: service_healthy
 
+  # Logs into the game, so it only runs when asked: docker compose --profile dumper up -d
+  # Needs docker/dumper/accounts.json (see accounts.example.json)
+  dumper:
+    build:
+      context: ..
+      dockerfile: docker/dumper/Dockerfile
+    profiles: [dumper]
+    # libpq's settings, as the tw2-stats role that owns the tables
+    environment:
+      PGHOST: db
+      PGDATABASE: tw2-stats
+      PGUSER: tw2-stats
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+    secrets:
+      - accounts
+    volumes:
+      - dumper-cache:/dumper/.cache
+    depends_on:
+      db:
+        condition: service_healthy
+
   # Asset builds: docker compose run --rm node npm ci && docker compose run --rm node npm run build
   # Dev server: docker compose run --rm --service-ports node npm run dev
   node:
@@ -64,3 +85,8 @@ services:
 
 volumes:
   db-data:
+  dumper-cache:
+
+secrets:
+  accounts:
+    file: ./dumper/accounts.json

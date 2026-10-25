@@ -10,6 +10,7 @@
 # Environment and secrets
 .env
 .env.backup
+/docker/dumper/accounts.json
 
 # Docker
 docker-compose.override.yml
