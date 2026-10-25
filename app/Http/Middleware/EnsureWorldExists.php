@@ -8,12 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Registers a database connection named after the requested world, so
- * services can use Model::on($world). Every world database shares the
- * credentials of the tw2-stats connection; its url is dropped, since it
- * would override the database name.
+ * Responds with 404 when the requested world isn't in the worlds table. Every
+ * world is in the tw2-stats database, so the services filter by its id.
  */
-class UseWorldConnection
+class EnsureWorldExists
 {
     /**
      * Handle an incoming request.
@@ -25,8 +23,9 @@ class UseWorldConnection
     public function handle(Request $request, Closure $next)
     {
         $world = $request->route('world');
-        if (is_string($world) && in_array($world, $this->worlds(), true) && !config()->has("database.connections.$world")) {
-            config(["database.connections.$world" => array_merge(config('database.connections.tw2-stats'), ['url' => null, 'database' => $world])]);
+        // The privacy page is served by the /{world} route (see WorldsController)
+        if ($world !== null && $world !== 'privacy' && !in_array($world, $this->worlds(), true)) {
+            abort(404);
         }
         return $next($request);
     }

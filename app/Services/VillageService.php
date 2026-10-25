@@ -22,7 +22,7 @@ class VillageService
     public function global_conquers(string $world, string $filter, int $offset, int $items)
     {
         //"Prepare" global conquers queries
-        $conquers = Conquer::on($world)->select(
+        $conquers = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name AS name',
             'villages.x', 'villages.y',
@@ -32,11 +32,11 @@ class VillageService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
@@ -64,23 +64,19 @@ class VillageService
      */
     public function overview(string $world, int $id): array
     {
-        $village = Village::on($world)->select(
+        $village = Village::where('villages.wid', $world)->select(
             'villages.id',
             'villages.name',
             'villages.x', 'villages.y',
             'villages.pid', 'players.name AS owner',
             'villages.points',
             'villages.provname'
-        )->join('players', 'players.id', '=', 'villages.pid')
+        )->join('players', fn ($join) => $join->on('players.id', '=', 'villages.pid')->where('players.wid', '=', $world))
             ->where('villages.id', '=', $id)->get()[0];
         
         //Extra information
-        $village['conquers'] = Conquer::on($world)->where('vid', '=', $id)->whereColumn('prevpid', '!=', 'nextpid')->where('nextpid', '!=', 0)->count();
-        $history = VillageHistory::on($world)->select(
-            'points',
-            'timestamp'
-        )->where('vid', '=', $id)
-            ->where('timestamp', '>', now()->subDays(3)->format('Y-m-d H:i:s'))
+        $village['conquers'] = Conquer::where('conquers.wid', $world)->where('vid', '=', $id)->whereColumn('prevpid', '!=', 'nextpid')->where('nextpid', '!=', 0)->count();
+        $history = History::villages($world)->hourly([$id], ['points'], now()->subDays(3))
             ->orderBy('timestamp')
             ->get();
         
@@ -98,14 +94,14 @@ class VillageService
     public function history(string $world, int $id, int $offset, int $items): array
     {
         //"Prepare" query for village's history
-        $history = VillageHistory::on($world)->select(
+        $history = VillageHistory::where('villages_history.wid', $world)->select(
             'villages_history.name',
             'villages.x', 'villages.y',
             'villages_history.pid', 'players.name AS owner',
             'villages_history.points',
             'villages_history.timestamp'
-        )->join('players', 'players.id', '=', 'villages_history.pid')
-            ->join('villages', 'villages.id', '=', 'villages_history.vid')
+        )->join('players', fn ($join) => $join->on('players.id', '=', 'villages_history.pid')->where('players.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'villages_history.vid')->where('villages.wid', '=', $world))
             ->where('villages_history.vid', '=', $id)
             ->orderBy('timestamp', 'DESC');
         
@@ -128,7 +124,7 @@ class VillageService
     public function conquers(string $world, int $id, string $filter, int $offset, int $items)
     {        
         //"Prepare" village's conquers query
-        $conquers = Conquer::on($world)->select(
+        $conquers = Conquer::where('conquers.wid', $world)->select(
             'conquers.name',
             'villages.x', 'villages.y',
             'conquers.prevpid', 'pl1.name AS old owner',
@@ -137,11 +133,11 @@ class VillageService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
+        )->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
             ->where('conquers.vid', '=', $id)
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->orderBy('conquers.timestamp', 'DESC')
@@ -162,7 +158,7 @@ class VillageService
      */
     public function name(string $world, int $id)
     {
-        $result = Village::on($world)->select('name', 'x', 'y')->where('id', '=', $id)->get()[0];
+        $result = Village::where('villages.wid', $world)->select('name', 'x', 'y')->where('id', '=', $id)->get()[0];
         $name = $result['name'] . ' (' . $result['x'] . '|' . $result['y'] . ')'; 
         return array('name' => $name);
     }
