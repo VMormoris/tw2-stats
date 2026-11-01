@@ -10,6 +10,7 @@
 # Environment and secrets
 .env
 .env.backup
+.env.production
 /docker/dumper/accounts.json
 
 # Docker
@@ -37,3 +38,6 @@ yarn-error.log
 
 # OS
 Thumbs.db
+
+# Database dumps of the backup service
+/backups
