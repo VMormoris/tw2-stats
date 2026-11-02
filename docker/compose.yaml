@@ -23,7 +23,7 @@ services:
       - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
       - ../database/initdb.d:/initdb:ro
     ports:
-      - 127.0.0.1:${DB_FORWARD_PORT:-5433}:5432
+      - 127.0.0.1:5432:5432
 
   app:
     build:
@@ -43,7 +43,7 @@ services:
     volumes:
       - ..:/var/www/tw2-stats
     ports:
-      - 127.0.0.1:${APP_FORWARD_PORT:-8088}:80
+      - 127.0.0.1:8000:80
     depends_on:
       db:
         condition: service_healthy

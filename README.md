@@ -26,7 +26,7 @@ docker compose run --rm node npm run build # Builds the front-end assets
 docker compose run --rm --service-ports node npm run dev # Starts the vite development server, with hot reload
 docker compose up -d # Starts app and postgres containers in the background
 ```
-The site is served at http://127.0.0.1:8088 and Postgres is forwarded to `127.0.0.1:5433`.
+The site is served at http://127.0.0.1:8000, PostgreSQL at `127.0.0.1:5432`, and Vite at `127.0.0.1:5173`.
 
 
 ## Contributing
