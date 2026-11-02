@@ -20,5 +20,5 @@
 <div id="app">
     <tribe name="{{ $name }}"></tribe>
 </div>
-<script src="{{ asset('/js/app.js') }}"></script>
+@vite('resources/js/app.js')
 @endsection

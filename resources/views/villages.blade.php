@@ -24,5 +24,5 @@
         <leaderboard :endpoint="'villages'" :title="'Latest world\'s conquers'" :placeholder="'Search Village, Player or Tribe'"></leaderboard>
     </div>
 </div>
-<script src="{{ asset('/js/app.js') }}"></script>
+@vite('resources/js/app.js')
 @endsection

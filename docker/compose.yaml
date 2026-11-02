@@ -1,0 +1,92 @@
+# Development environment, included by the compose.yaml at the repository
+# root. Values come from docker/.env (see docker/.env.example); paths are
+# relative to this directory.
+
+x-db: &db
+  environment:
+    POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in docker/.env}
+    DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in docker/.env}
+    DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD in docker/.env}
+    TZ: Europe/London
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+
+services:
+  db:
+    <<: *db
+    image: postgres:latest
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ../database/initdb.d:/initdb:ro
+    ports:
+      - 127.0.0.1:5432:5432
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/app/Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    # Overrides the DB_* values in the application's .env
+    environment:
+      TZ: Europe/London
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: tw2-stats
+      DB_USERNAME: api
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ..:/var/www/tw2-stats
+    ports:
+      - 127.0.0.1:8000:80
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Logs into the game, so it only runs when asked: docker compose --profile dumper up -d
+  # Needs docker/dumper/accounts.json (see accounts.example.json)
+  dumper:
+    build:
+      context: ..
+      dockerfile: docker/dumper/Dockerfile
+    profiles: [dumper]
+    # libpq's settings, as the tw2-stats role that owns the tables
+    environment:
+      PGHOST: db
+      PGDATABASE: tw2-stats
+      PGUSER: tw2-stats
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+    secrets:
+      - accounts
+    volumes:
+      - dumper-cache:/dumper/.cache
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Asset builds: docker compose run --rm node npm ci && docker compose run --rm node npm run build
+  # Dev server: docker compose run --rm --service-ports node npm run dev
+  node:
+    image: node:latest
+    profiles: [tools]
+    user: ${UID:-1000}:${GID:-1000}
+    working_dir: /var/www/tw2-stats
+    ports:
+      - 127.0.0.1:5173:5173
+    environment:
+      npm_config_cache: /tmp/.npm
+    volumes:
+      - ..:/var/www/tw2-stats
+
+volumes:
+  db-data:
+  dumper-cache:
+
+secrets:
+  accounts:
+    file: ./dumper/accounts.json

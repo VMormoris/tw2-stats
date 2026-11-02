@@ -27,7 +27,7 @@ class PlayerService
     public function leaderboard(string $world, string $filter, int $offset, int $items): array
     {
         //"Prepare" query for future use
-        $players = Player::on($world)->select(
+        $players = Player::where('players.wid', $world)->select(
             'players.rankno',
             'players.id',
             'players.name AS name',
@@ -36,7 +36,7 @@ class PlayerService
             'players.points',
             'players.offbash', 'players.defbash', 'players.totalbash',
             'players.vp'
-        )->join('tribes', 'tribes.id', '=', 'players.tid')
+        )->join('tribes', fn ($join) => $join->on('tribes.id', '=', 'players.tid')->where('tribes.wid', '=', $world))
             ->where('players.id', '!=', 0)
             ->where('players.nname', 'like', $filter)
             ->orderBy('players.rankno', 'ASC');
@@ -46,20 +46,18 @@ class PlayerService
         $players = $players->skip($offset)->take($items)->get();
 
         //Extra details(aka yesterday's rankno)
-        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
-        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
-        $details = PlayerHistory::on($world)->select(
+        $start = now()->subDays(1)->format('Y-m-d 00:00:00');
+        $end = now()->subDays(1)->format('Y-m-d 23:00:00');
+        $ids = DB::table('players')->select('id')->where('players.wid', $world)
+            ->where('nname', 'like', $filter)
+            ->where('id', '!=', 0)
+            ->orderBy('rankno', 'ASC')
+            ->skip($offset)
+            ->take($items);
+        $details = History::players($world)->held($ids, ['rankno', 'points', 'villages', 'offbash', 'defbash', 'totalbash', 'vp'], $start, $end)->select(
             'pid AS id',
-            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
-        )->whereIn('pid', function($query) use(&$filter, $offset, $items){
-            $query->select('id')->from('players')
-                ->where('nname', 'like', $filter)
-                ->where('id', '!=', 0)
-                ->orderBy('rankno', 'ASC')
-                ->skip($offset)
-                ->take($items);
-        })->whereBetween('timestamp', [$start, $end])
-            ->groupBy('pid')
+            DB::raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->groupBy('pid')
             ->get();
 
         return array('total' => $count, 'data' => $players, 'details' => $details);
@@ -74,7 +72,7 @@ class PlayerService
     public function overview(string $world, int $id): array
     {
         //Basic players information
-        $player = Player::on($world)->select(
+        $player = Player::where('players.wid', $world)->select(
             'players.rankno',
             'players.name AS name',
             'players.tid', 'tribes.name AS tname',
@@ -82,37 +80,30 @@ class PlayerService
             'players.villages',
             'players.offbash', 'players.defbash', 'players.totalbash',
             'players.vp'
-        )->join('tribes', 'tribes.id', '=', 'players.tid')
+        )->join('tribes', fn ($join) => $join->on('tribes.id', '=', 'players.tid')->where('tribes.wid', '=', $world))
             ->where('players.id', '=', $id)->get()[0];
         
         //Extra information
-        $player['tchanges'] = TribeChange::on($world)->where('pid', '=', $id)->whereColumn('prevtid', '!=', 'nexttid')->count();
-        $losses = Conquer::on($world)->where('prevpid', '=', $id)->count();
-        $gains = Conquer::on($world)->where('nextpid', '=', $id)->count();
+        $player['tchanges'] = TribeChange::where('tribe_changes.wid', $world)->where('pid', '=', $id)->whereColumn('prevtid', '!=', 'nexttid')->count();
+        $losses = Conquer::where('conquers.wid', $world)->where('prevpid', '=', $id)->count();
+        $gains = Conquer::where('conquers.wid', $world)->where('nextpid', '=', $id)->count();
         $player['conquers'] = array('losses' => $losses, 'gains' => $gains);
 
         //Get history data for graphs
-        $history = PlayerHistory::on($world)->select(
+        $history = History::players($world)->hourly([$id], [
             'points',
             'rankno',
-            'offbash', 'defbash', 'totalbash',
-            'timestamp'
-        )->where('pid', '=', $id)
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
+            'offbash', 'defbash', 'totalbash'
+        ], now()->subDays(3))
             ->orderBy('timestamp')->get();
-        
-        $villages = PlayerHistory::on($world)->select(
-            'villages',
-            'timestamp'
-        )->where('pid', '=', $id)
-            ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp', 'DESC')->take(8)->get();
+
+        $villages = History::players($world)->daily($id, ['villages'], 8);
 
         return array(
-            'details' => $player, 
+            'details' => $player,
             'graphs_data' => array(
                 'general' => $history,
-                'villages' => array_reverse($villages->toArray())
+                'villages' => $villages
             )
         );
     }
@@ -128,7 +119,7 @@ class PlayerService
     public function history(string $world, int $id, int $offset, int $items): array
     {
         //"Prepare" query for player's history
-        $history = PlayerHistory::on($world)->select(
+        $history = PlayerHistory::where('players_history.wid', $world)->select(
             'players_history.tid', 'tribes.name AS new tribe',
             'players_history.villages',
             'players_history.points',
@@ -136,7 +127,7 @@ class PlayerService
             'players_history.rankno',
             'players_history.vp',
             'players_history.timestamp' 
-        )->join('tribes', 'tribes.id', '=', 'players_history.tid')
+        )->join('tribes', fn ($join) => $join->on('tribes.id', '=', 'players_history.tid')->where('tribes.wid', '=', $world))
             ->where('players_history.pid', '=', $id)
             ->orderBy('players_history.timestamp', 'DESC');
         
@@ -181,7 +172,7 @@ class PlayerService
     public function villages(string $world, int $id, string $filter, int $offset, int $items) : array
     {
         //"Prepare" query for player's villages
-        $villages = Village::on($world)->select(
+        $villages = Village::where('villages.wid', $world)->select(
             'id',
             'name',
             'x', 'y',
@@ -210,7 +201,7 @@ class PlayerService
     private function all(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" conquers query
-        $conquers = Conquer::on($world)->select(
+        $conquers = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -220,11 +211,11 @@ class PlayerService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
                 $query->where('conquers.nname', 'like', $filter)
@@ -258,7 +249,7 @@ class PlayerService
     private function losses(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" losses query
-        $losses = Conquer::on($world)->select(
+        $losses = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -268,10 +259,10 @@ class PlayerService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players', 'players.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
+        )->join('players', fn ($join) => $join->on('players.id', '=', 'conquers.nextpid')->where('players.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($filter){
                 $query->where('conquers.nname', 'like', $filter)
@@ -302,7 +293,7 @@ class PlayerService
     private function gains(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" gains query
-        $gains = Conquer::on($world)->select(
+        $gains = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -312,10 +303,10 @@ class PlayerService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players', 'players.id', '=', 'conquers.prevpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
+        )->join('players', fn ($join) => $join->on('players.id', '=', 'conquers.prevpid')->where('players.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
             ->where(function($query) use ($filter){
                 $query->where('conquers.nname', 'like', $filter)
                     ->orWhere('players.nname', 'like', $filter);
@@ -343,7 +334,7 @@ class PlayerService
     public function changes(string $world, int $id, int $offset, int $items)
     {
         //"Prepare" tribe changes query
-        $changes = TribeChange::on($world)->select(
+        $changes = TribeChange::where('tribe_changes.wid', $world)->select(
             'tribe_changes.prevtid', 'tr1.name AS old tribe',
             'tribe_changes.nexttid', 'tr2.name AS new tribe',
             'tribe_changes.villages',
@@ -352,8 +343,8 @@ class PlayerService
             'tribe_changes.rankno',
             'tribe_changes.vp',
             'tribe_changes.timestamp'
-        )->join('tribes AS tr1', 'tribe_changes.prevtid', '=', 'tr1.id')
-            ->join('tribes AS tr2', 'tribe_changes.nexttid', '=', 'tr2.id')
+        )->join('tribes AS tr1', fn ($join) => $join->on('tribe_changes.prevtid', '=', 'tr1.id')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tribe_changes.nexttid', '=', 'tr2.id')->where('tr2.wid', '=', $world))
             ->where('tribe_changes.pid', '=', $id)
             ->orderBy('tribe_changes.timestamp', 'DESC');
         
@@ -414,32 +405,32 @@ class PlayerService
          *   ORDER BY "num";
          */
 
-        $pvt_gains = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $pvt_gains = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'prevtid AS tid',
-            DB::connection($world)->raw('COUNT(*) AS gains')
+            DB::raw('COUNT(*) AS gains')
         )->where('nextpid', '=', $id)
             ->groupBy('prevtid')
             ->orderBy('gains', 'DESC');
 
-        $best6 = DB::connection($world)->table('pvt_gains')
+        $best6 = DB::table('pvt_gains')
         ->select(
             'pvt_gains.num AS num',
             'tr.id AS id',
             'tr.name AS name',
             'pvt_gains.gains AS gains'
         )->withExpression('pvt_gains', $pvt_gains)
-            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->join('tribes AS tr', fn ($join) => $join->on('tr.id', '=', 'tid')->where('tr.wid', '=', $world))
             ->whereBetween('num', [1, 6]);
         
-        $total = DB::connection($world)->table('pvt_gains')->withExpression('pvt_gains', $pvt_gains)->count();
+        $total = DB::table('pvt_gains')->withExpression('pvt_gains', $pvt_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('pvt_gains')
+            $result = DB::table('pvt_gains')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -483,32 +474,32 @@ class PlayerService
          *   ORDER BY "num";
          */
 
-        $pvt_losses = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $pvt_losses = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'nexttid AS tid',
-            DB::connection($world)->raw('COUNT(*) AS losses')
+            DB::raw('COUNT(*) AS losses')
         )->where('prevpid', '=', $id)
             ->groupBy('nexttid')
             ->orderBy('losses', 'DESC');
 
-        $best6 = DB::connection($world)->table('pvt_losses')
+        $best6 = DB::table('pvt_losses')
         ->select(
             'pvt_losses.num AS num',
             'tr.id AS id',
             'tr.name AS name',
             'pvt_losses.losses AS losses'
         )->withExpression('pvt_losses', $pvt_losses)
-            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->join('tribes AS tr', fn ($join) => $join->on('tr.id', '=', 'tid')->where('tr.wid', '=', $world))
             ->whereBetween('num', [1, 6]);
         
-            $total = DB::connection($world)->table('pvt_losses')->withExpression('pvt_losses', $pvt_losses)->count();
+            $total = DB::table('pvt_losses')->withExpression('pvt_losses', $pvt_losses)->count();
             if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('pvt_losses')
+            $result = DB::table('pvt_losses')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -550,32 +541,32 @@ class PlayerService
          *   ORDER BY "num";
          */
         
-        $pvp_gains = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $pvp_gains = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'prevpid AS pid',
-            DB::connection($world)->raw('COUNT(*) AS gains')
+            DB::raw('COUNT(*) AS gains')
         )->where('nextpid', '=', $id)
             ->groupBy('prevpid')
             ->orderBy('gains', 'DESC');
 
-        $best6 = DB::connection($world)->table('pvp_gains')
+        $best6 = DB::table('pvp_gains')
             ->select(
                 'pvp_gains.num AS num',
                 'pl.id AS id',
                 'pl.name AS name',
                 'pvp_gains.gains AS gains'
             )->withExpression('pvp_gains', $pvp_gains)
-                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->join('players AS pl', fn ($join) => $join->on('pl.id', '=', 'pid')->where('pl.wid', '=', $world))
                 ->whereBetween('num', [1, 6]);
         
-        $total = DB::connection($world)->table('pvp_gains')->withExpression('pvp_gains', $pvp_gains)->count();
+        $total = DB::table('pvp_gains')->withExpression('pvp_gains', $pvp_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('pvp_gains')
+            $result = DB::table('pvp_gains')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -617,32 +608,32 @@ class PlayerService
          *   ORDER BY "num";
          */
 
-        $pvp_losses = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $pvp_losses = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'nextpid AS pid',
-            DB::connection($world)->raw('COUNT(*) AS losses')
+            DB::raw('COUNT(*) AS losses')
         )->where('prevpid', '=', $id)
             ->groupBy('nextpid')
             ->orderBy('losses', 'DESC');
         
-        $best6 = DB::connection($world)->table('pvp_losses')
+        $best6 = DB::table('pvp_losses')
             ->select(
                 'pvp_losses.num AS num',
                 'pl.id AS id',
                 'pl.name AS name',
                 'pvp_losses.losses AS losses'
             )->withExpression('pvp_losses', $pvp_losses)
-                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->join('players AS pl', fn ($join) => $join->on('pl.id', '=', 'pid')->where('pl.wid', '=', $world))
                 ->whereBetween('num', [1, 6]);
 
-        $total = DB::connection($world)->table('pvp_losses')->withExpression('pvp_losses', $pvp_losses)->count();
+        $total = DB::table('pvp_losses')->withExpression('pvp_losses', $pvp_losses)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('pvp_losses')
+            $result = DB::table('pvp_losses')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -664,7 +655,7 @@ class PlayerService
      */
     public function name(string $world, int $id)
     {
-        $result = Player::on($world)->select('name')->where('id', '=', $id)->get()[0];
+        $result = Player::where('players.wid', $world)->select('name')->where('id', '=', $id)->get()[0];
         return array('name' => $result['name']);
     }
 }
