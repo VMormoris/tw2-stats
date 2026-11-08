@@ -94,7 +94,7 @@ function Update(obj)
             const defbashstr = `<a>${format(row['defbash'])}</a>${pretify(offsets['defbash'])}`;
             const totalbashstr = `<a>${format(row['totalbash'])}</a>${pretify(offsets['totalbash'])}`;
             const vpstr = `<a>${format(row['vp'])}</a>${pretify(offsets['vp'])}`;
-            const tribestr = row['tid'] === 0 ? row['new tribe'] : `<a href="/${world}/tribe?id=${row['id']}">${row['new tribe']}</a>`;
+            const tribestr = row['tid'] === 0 ? row['new tribe'] : `<a href="/${world}/tribe?id=${row['tid']}">${row['new tribe']}</a>`;
 
             obj['rows'].push({
                 'num': num,
