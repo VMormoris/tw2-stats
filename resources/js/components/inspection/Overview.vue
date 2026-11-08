@@ -112,7 +112,7 @@ onMounted(() => {
             const conquersendpoint = `/${world}/tribe?id=${props.id}&view=conquers`
             const conquers = `<a href="${conquersendpoint}">${all}</a>(<a href="${conquersendpoint}&show=gains">+${details['conquers']['gains']}</a>,<a href="${conquersendpoint}&show=losses">-${details['conquers']['losses']}</a>) Internally: <a href="${conquersendpoint}&show=internals">${details['conquers']['internals']}</a>`;
             const members = details['members'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=members">${details['members']}</a>`;
-            const changes = details['tchanges'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=members">${details['tchanges']}</a>`;
+            const changes = details['tchanges'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=changes">${details['tchanges']}</a>`;
             info.value.push({ 'Rank': details['rankno'] });
             info.value.push({ 'Name': details['name'] });
             info.value.push({ 'Points': format(details['points']) });
