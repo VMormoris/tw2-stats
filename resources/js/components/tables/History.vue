@@ -27,10 +27,12 @@ function Update(obj)
         obj['total'] = Math.ceil(resp['total']/obj['items']);
         const rows = resp['data'];
         const offset = (obj['page'] - 1) * obj['items'] + 1;
-        for(let i = 0; i < rows.length-1; i++)
+        //The API returns one extra (older) row, which is only used for calculating the differences
+        const shown = Math.min(rows.length, obj['items']);
+        for(let i = 0; i < shown; i++)
         {
             const row = rows[i];
-            const nextrow = rows[i+1];
+            const nextrow = rows[i+1];//Undefined for the oldest record, which has nothing to compare with
             if(props['endpoint'] === 'tribe')
                 UpdateTribe(row, nextrow, offset+i);
             else if(props['endpoint'] === 'player')
@@ -41,25 +43,13 @@ function Update(obj)
 
         function UpdateTribe(row, nextrow, num)
         {
-            const offsets =
-            {
-                'points': row['points'] - nextrow['points'],
-                'members': row['members'] - nextrow['members'],
-                'villages': row['villages'] - nextrow['villages'],
-                'offbash': row['offbash'] - nextrow['offbash'],
-                'defbash': row['defbash'] - nextrow['defbash'],
-                'totalbash': row['totalbash'] - nextrow['totalbash'],
-                'rankno': row['rankno'] - nextrow['rankno'],
-                'vp': row['vp'] - nextrow['vp']
-            };
-
-            const pointstr = `<a>${format(row['points'])}</a>${pretify(offsets['points'])}`;
-            const memberstr = `<a>${format(row['members'])}</a>${pretify(offsets['members'])}`;
-            const villstr = `<a>${format(row['villages'])}</a>${pretify(offsets['villages'])}`;
-            const offbashstr = `<a>${format(row['offbash'])}</a>${pretify(offsets['offbash'])}`;
-            const defbashstr = `<a>${format(row['defbash'])}</a>${pretify(offsets['defbash'])}`;
-            const totalbashstr = `<a>${format(row['totalbash'])}</a>${pretify(offsets['totalbash'])}`;
-            const vpstr = `<a>${format(row['vp'])}</a>${pretify(offsets['vp'])}`;
+            const pointstr = `<a>${format(row['points'])}</a>${change(row, nextrow, 'points')}`;
+            const memberstr = `<a>${format(row['members'])}</a>${change(row, nextrow, 'members')}`;
+            const villstr = `<a>${format(row['villages'])}</a>${change(row, nextrow, 'villages')}`;
+            const offbashstr = `<a>${format(row['offbash'])}</a>${change(row, nextrow, 'offbash')}`;
+            const defbashstr = `<a>${format(row['defbash'])}</a>${change(row, nextrow, 'defbash')}`;
+            const totalbashstr = `<a>${format(row['totalbash'])}</a>${change(row, nextrow, 'totalbash')}`;
+            const vpstr = `<a>${format(row['vp'])}</a>${change(row, nextrow, 'vp')}`;
 
             obj['rows'].push({
                 'num': num,
@@ -77,23 +67,12 @@ function Update(obj)
 
         function UpdatePlayer(row, nextrow, num)
         {
-            const offsets =
-            {
-                'points': row['points'] - nextrow['points'],
-                'villages': row['villages'] - nextrow['villages'],
-                'offbash': row['offbash'] - nextrow['offbash'],
-                'defbash': row['defbash'] - nextrow['defbash'],
-                'totalbash': row['totalbash'] - nextrow['totalbash'],
-                'rankno': row['rankno'] - nextrow['rankno'],
-                'vp': row['vp'] - nextrow['vp']
-            };
-            
-            const pointstr = `<a>${format(row['points'])}</a>${pretify(offsets['points'])}`;
-            const villstr = `<a>${format(row['villages'])}</a>${pretify(offsets['villages'])}`;
-            const offbashstr = `<a>${format(row['offbash'])}</a>${pretify(offsets['offbash'])}`;
-            const defbashstr = `<a>${format(row['defbash'])}</a>${pretify(offsets['defbash'])}`;
-            const totalbashstr = `<a>${format(row['totalbash'])}</a>${pretify(offsets['totalbash'])}`;
-            const vpstr = `<a>${format(row['vp'])}</a>${pretify(offsets['vp'])}`;
+            const pointstr = `<a>${format(row['points'])}</a>${change(row, nextrow, 'points')}`;
+            const villstr = `<a>${format(row['villages'])}</a>${change(row, nextrow, 'villages')}`;
+            const offbashstr = `<a>${format(row['offbash'])}</a>${change(row, nextrow, 'offbash')}`;
+            const defbashstr = `<a>${format(row['defbash'])}</a>${change(row, nextrow, 'defbash')}`;
+            const totalbashstr = `<a>${format(row['totalbash'])}</a>${change(row, nextrow, 'totalbash')}`;
+            const vpstr = `<a>${format(row['vp'])}</a>${change(row, nextrow, 'vp')}`;
             const tribestr = row['tid'] === 0 ? row['new tribe'] : `<a href="/${world}/tribe?id=${row['tid']}">${row['new tribe']}</a>`;
 
             obj['rows'].push({
@@ -112,8 +91,7 @@ function Update(obj)
 
         function UpdateVillage(row, nextrow, num)
         {
-            const offsets = { 'points': row['points'] - nextrow['points'] };
-            const pointstr = `<a>${format(row['points'])}</a>${pretify(offsets['points'])}`;
+            const pointstr = `<a>${format(row['points'])}</a>${change(row, nextrow, 'points')}`;
             const owner = row['pid'] === 0 ? row['owner'] : `<a href="/${world}/player?id=${row['pid']}">${row['owner']}</a>`;
             
             obj['rows'].push({
@@ -125,6 +103,11 @@ function Update(obj)
             });
         }
     });
+}
+
+function change(row, nextrow, key)
+{
+    return nextrow ? pretify(row[key] - nextrow[key]) : '';
 }
 
 function pretify(offset)
