@@ -20,6 +20,8 @@ function Update(obj)
     const nochange = ' <a class="text-warning no-u"><span></span></a>';
     const increase = ' <a class="text-success no-u">&uarr;</a>';
     const decrease = ' <a class="text-danger no-u">&darr;</a>';
+    //A row without a value from yesterday has nothing to be compared against
+    const compare = (old, current, higher, lower) => old == null || old === current ? nochange : (old < current ? higher : lower);
     const url = document.location.href;
     const world = extract_world(url);
     const reqobj = {'page': obj['page'], 'items': obj['items'], 'filter': obj['filter'] };
@@ -75,13 +77,13 @@ function Update(obj)
             const villstr = row['villages'] === 0 ? row['villages'] : `<a href="/${world}/player?id=${row['id']}&view=villages">${format(row['villages'])}</a>`;
             const tribestr = row['tid'] === 0 ? row['tname'] : `<a href="/${world}/tribe?id=${row['tid']}">${row['tname']}</a>`;
             const extra = {
-                'rankno': details.length === 0 ? nochange : (row['oldrank'] === row['rankno'] ? nochange : (row['oldrank'] < row['rankno'] ? decrease : increase)),
-                'points': details.length === 0 ? nochange : (row['oldpoints'] === row['points'] ? nochange : (row['oldpoints'] < row['points'] ? increase : decrease)),
-                'villages': details.length === 0 ? nochange : (row['oldvillages'] === row['villages'] ? nochange : (row['oldvillages'] < row['villages'] ? increase : decrease)),
-                'offbash': details.length === 0 ? nochange : (row['oldoffbash'] === row['offbash'] ? nochange : (row['oldoffbash'] < row['offbash'] ? increase : decrease)),
-                'defbash': details.length === 0 ? nochange : (row['olddefbash'] === row['defbash'] ? nochange : (row['olddefbash'] < row['defbash'] ? increase : decrease)),
-                'totalbash': details.length === 0 ? nochange : (row['oldtotalbash'] === row['totalbash'] ? nochange : (row['oldtotalbash'] < row['totalbash'] ? increase : decrease)),
-                'vp': details.length === 0 ? nochange : (row['oldvp'] === row['vp'] ? nochange : (row['oldvp'] < row['vp'] ? increase : decrease)),
+                'rankno': compare(row['oldrank'], row['rankno'], decrease, increase),
+                'points': compare(row['oldpoints'], row['points'], increase, decrease),
+                'villages': compare(row['oldvillages'], row['villages'], increase, decrease),
+                'offbash': compare(row['oldoffbash'], row['offbash'], increase, decrease),
+                'defbash': compare(row['olddefbash'], row['defbash'], increase, decrease),
+                'totalbash': compare(row['oldtotalbash'], row['totalbash'], increase, decrease),
+                'vp': compare(row['oldvp'], row['vp'], increase, decrease),
             };
 
             obj['rows'].push({
@@ -99,14 +101,14 @@ function Update(obj)
         {
             const memberstr = row['members'] === 0 ? row['members'] : `<a href="/${world}/tribe?id=${row['id']}&view=members">${row['members']}</a>`;
             const extra = {
-                'rankno': details.length === 0 ? nochange : (row['oldrank'] === row['rankno'] ? nochange : (row['oldrank'] < row['rankno'] ? decrease : increase)),
-                'points': details.length === 0 ? nochange : (row['oldpoints'] === row['points'] ? nochange : (row['oldpoints'] < row['points'] ? increase : decrease)),
-                'members': details.length === 0 ? nochange : (row['oldmembers'] === row['members'] ? nochange : (row['oldmembers'] < row['members'] ? increase : decrease)),
-                'villages': details.length === 0 ? nochange : (row['oldvillages'] === row['villages'] ? nochange : (row['oldvillages'] < row['villages'] ? increase : decrease)),
-                'offbash': details.length === 0 ? nochange : (row['oldoffbash'] === row['offbash'] ? nochange : (row['oldoffbash'] < row['offbash'] ? increase : decrease)),
-                'defbash': details.length === 0 ? nochange : (row['olddefbash'] === row['defbash'] ? nochange : (row['olddefbash'] < row['defbash'] ? increase : decrease)),
-                'totalbash': details.length === 0 ? nochange : (row['oldtotalbash'] === row['totalbash'] ? nochange : (row['oldtotalbash'] < row['totalbash'] ? increase : decrease)),
-                'vp': details.length === 0 ? nochange : (row['oldvp'] === row['vp'] ? nochange : (row['oldvp'] < row['vp'] ? increase : decrease)),
+                'rankno': compare(row['oldrank'], row['rankno'], decrease, increase),
+                'points': compare(row['oldpoints'], row['points'], increase, decrease),
+                'members': compare(row['oldmembers'], row['members'], increase, decrease),
+                'villages': compare(row['oldvillages'], row['villages'], increase, decrease),
+                'offbash': compare(row['oldoffbash'], row['offbash'], increase, decrease),
+                'defbash': compare(row['olddefbash'], row['defbash'], increase, decrease),
+                'totalbash': compare(row['oldtotalbash'], row['totalbash'], increase, decrease),
+                'vp': compare(row['oldvp'], row['vp'], increase, decrease),
             };
             
             obj['rows'].push({
