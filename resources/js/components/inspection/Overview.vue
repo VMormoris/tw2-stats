@@ -117,9 +117,9 @@ onMounted(() => {
             info.value.push({ 'Name': details['name'] });
             info.value.push({ 'Points': format(details['points']) });
             info.value.push({ 'Members': members });
-            info.value.push({ 'Average Points per Member': format(parseInt(details['points']/details['members'])) });
+            info.value.push({ 'Average Points per Member': details['members'] === 0 ? 'N/A' : format(parseInt(details['points']/details['members'])) });
             info.value.push({ 'Villages': format(details['villages']) });
-            info.value.push({ 'Average Points per Village': format(parseInt(details['points']/details['villages'])) });
+            info.value.push({ 'Average Points per Village': details['villages'] === 0 ? 'N/A' : format(parseInt(details['points']/details['villages'])) });
             info.value.push({ 'Member Changes': changes });
             info.value.push({ 'Conquers': conquers });
             info.value.push({ 'OBP': format(details['offbash']) });
@@ -141,7 +141,7 @@ onMounted(() => {
             info.value.push({ 'Tribe': tribe });
             info.value.push({ 'Points': format(details['points']) });
             info.value.push({ 'Villages': villages });
-            info.value.push({ 'Average Points per Village': format(parseInt(details['points']/details['villages'])) });
+            info.value.push({ 'Average Points per Village': details['villages'] === 0 ? 'N/A' : format(parseInt(details['points']/details['villages'])) });
             info.value.push({ 'Tribe Changes': changes });
             info.value.push({ 'Conquers': conquers });
             info.value.push({ 'OBP': format(details['offbash']) });
