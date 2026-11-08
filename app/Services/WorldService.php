@@ -53,7 +53,9 @@ class WorldService
             ->orderBy('rankno')
             ->take(5)
             ->get();
-        //History data for graphs
+        //History data for graphs: the rank at every hour of the past 7 days of the tribes
+        //ranked 5 or better now, rebuilt from their history (carried forward up to the last
+        //dump each was in). Only rankno <= 5 is checked, not the filters of the top 5 above
         $top5 = DB::table('tribes')->select('id')->where('tribes.wid', $world)->where('rankno', '<=', 5);
         $history = History::tribes($world)->hourly($top5, ['tid AS id', 'rankno'], now()->subDays(7))
             ->orderBy('timestamp')
@@ -73,7 +75,7 @@ class WorldService
      */
     public function players(string $world): array
     {
-        //Top 5 tribes
+        //Top 5 players
         $best5 = Player::where('players.wid', $world)->select(
             'rankno',
             'id',
@@ -85,7 +87,9 @@ class WorldService
             ->orderBy('rankno')
             ->take(5)
             ->get();
-        //History data for graphs
+        //History data for graphs: the rank at every hour of the past 7 days of the players
+        //ranked 5 or better now, rebuilt from their history (carried forward up to the last
+        //dump each was in). Only rankno <= 5 is checked, not the filters of the top 5 above
         $top5 = DB::table('players')->select('id')->where('players.wid', $world)->where('rankno', '<=', 5);
         $history = History::players($world)->hourly($top5, ['pid AS id', 'rankno'], now()->subDays(7))
             ->orderBy('timestamp')

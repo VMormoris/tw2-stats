@@ -45,7 +45,9 @@ class PlayerService
         $count = $players->count();
         $players = $players->skip($offset)->take($items)->get();
 
-        //Extra details(aka yesterday's rankno)
+        //Yesterday's comparison values: every field is its own MAX over the values the
+        //player held from yesterday 00:00 to 23:00, the value carried in from before 00:00
+        //included, so the fields are not one snapshot
         $start = now()->subDays(1)->format('Y-m-d 00:00:00');
         $end = now()->subDays(1)->format('Y-m-d 23:00:00');
         $ids = DB::table('players')->select('id')->where('players.wid', $world)
@@ -89,7 +91,9 @@ class PlayerService
         $gains = Conquer::where('conquers.wid', $world)->where('nextpid', '=', $id)->count();
         $player['conquers'] = array('losses' => $losses, 'gains' => $gains);
 
-        //Get history data for graphs
+        //Get history data for graphs: the values at every hour of the past 3 days (the
+        //last held value carried forward, up to the last dump the player was in) and,
+        //for the villages, the values at the last 8 midnights
         $history = History::players($world)->hourly([$id], [
             'points',
             'rankno',
@@ -385,24 +389,42 @@ class PlayerService
     private function pvt_gains(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the tribes the player conquered villages from by number of conquers
+         * (one CTE row each):
+         *
          *   WITH pvt_gains AS
          *   (
          *       SELECT
-         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *          prevtid AS "tid",
-         *          COUNT(*) AS "gains"
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           prevtid AS tid,
+         *           COUNT(*) AS gains
          *       FROM conquers
-         *       WHERE nextpid = $id
+         *       WHERE conquers.wid = :world AND nextpid = :id
          *       GROUP BY prevtid
-         *       ORDER BY "gains" DESC
+         *       ORDER BY gains DESC
          *   )
-         *   SELECT pvt_gains."num", tr.id, tr.name AS "name", pvt_gains."gains" FROM pvt_gains
-         *   INNER JOIN tribes AS tr ON tr.id = pvt_gains."tid"
+         *
+         * A separate "SELECT COUNT(*) FROM pvt_gains" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH pvt_gains AS (...)
+         *   SELECT pvt_gains.num AS num, tr.id AS id, tr.name AS name, pvt_gains.gains AS gains
+         *   FROM pvt_gains
+         *   INNER JOIN tribes AS tr ON tr.id = tid AND tr.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH pvt_gains AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(pvt_gains.gains) AS gains
+         *   FROM pvt_gains
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM pvt_gains WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
         $pvt_gains = Conquer::where('conquers.wid', $world)->select(
@@ -454,24 +476,42 @@ class PlayerService
     private function pvt_losses(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the tribes that conquered the player's villages by number of conquers
+         * (one CTE row each):
+         *
          *   WITH pvt_losses AS
          *   (
          *       SELECT
-         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *          nexttid AS "tid",
-         *          COUNT(*) AS "losses"
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           nexttid AS tid,
+         *           COUNT(*) AS losses
          *       FROM conquers
-         *       WHERE prevpid = $id
+         *       WHERE conquers.wid = :world AND prevpid = :id
          *       GROUP BY nexttid
-         *       ORDER BY "losses" DESC
+         *       ORDER BY losses DESC
          *   )
-         *   SELECT pvt_losses."num", tr,id, tr.name AS "name", pvt_losses."losses" FROM pvt_losses
-         *   INNER JOIN tribes AS tr ON tr.id = pvt_losses."tid"
+         *
+         * A separate "SELECT COUNT(*) FROM pvt_losses" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH pvt_losses AS (...)
+         *   SELECT pvt_losses.num AS num, tr.id AS id, tr.name AS name, pvt_losses.losses AS losses
+         *   FROM pvt_losses
+         *   INNER JOIN tribes AS tr ON tr.id = tid AND tr.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH pvt_losses AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(pvt_losses.losses) AS losses
+         *   FROM pvt_losses
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM pvt_losses WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
         $pvt_losses = Conquer::where('conquers.wid', $world)->select(
@@ -522,23 +562,42 @@ class PlayerService
     private function pvp_gains(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
-         * WITH pvp_gains AS
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the players the player conquered villages from by number of conquers
+         * (one CTE row each):
+         *
+         *   WITH pvp_gains AS
          *   (
          *       SELECT
-         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *           prevpid AS "pid",
-         *           COUNT(*) AS "gains"
-         *       WHERE nextpid = $id
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           prevpid AS pid,
+         *           COUNT(*) AS gains
+         *       FROM conquers
+         *       WHERE conquers.wid = :world AND nextpid = :id
          *       GROUP BY prevpid
-         *       ORDER BY "gains" DESC
+         *       ORDER BY gains DESC
          *   )
-         *   SELECT pvp_gains."num", pl.id, pl.name AS "name", pvp_gains."gains" FROM pvp_gains
-         *   INNER JOIN players AS pl ON pl.id = pvp_gains."pid"
+         *
+         * A separate "SELECT COUNT(*) FROM pvp_gains" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH pvp_gains AS (...)
+         *   SELECT pvp_gains.num AS num, pl.id AS id, pl.name AS name, pvp_gains.gains AS gains
+         *   FROM pvp_gains
+         *   INNER JOIN players AS pl ON pl.id = pid AND pl.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH pvp_gains AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(pvp_gains.gains) AS gains
+         *   FROM pvp_gains
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM pvp_gains WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
         
         $pvp_gains = Conquer::where('conquers.wid', $world)->select(
@@ -589,23 +648,42 @@ class PlayerService
     private function pvp_losses(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
-         * WITH pvp_losses AS
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the players that conquered the player's villages by number of conquers
+         * (one CTE row each):
+         *
+         *   WITH pvp_losses AS
          *   (
          *       SELECT
-         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *           nextpid AS "pid",
-         *           COUNT(*) AS "losses"
-         *       WHERE prevpid = $id
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           nextpid AS pid,
+         *           COUNT(*) AS losses
+         *       FROM conquers
+         *       WHERE conquers.wid = :world AND prevpid = :id
          *       GROUP BY nextpid
-         *       ORDER BY "losses" DESC
+         *       ORDER BY losses DESC
          *   )
-         *   SELECT pvp_losses."num" AS "num", pl.id, pl.name AS "name", pvp_losses."losses" FROM pvp_losses
-         *   INNER JOIN players AS pl ON pl.id = pvp_losses."pid"
-         *   WHERE "num" BETWEEN 1 AND 6
+         *
+         * A separate "SELECT COUNT(*) FROM pvp_losses" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH pvp_losses AS (...)
+         *   SELECT pvp_losses.num AS num, pl.id AS id, pl.name AS name, pvp_losses.losses AS losses
+         *   FROM pvp_losses
+         *   INNER JOIN players AS pl ON pl.id = pid AND pl.wid = :world
+         *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH pvp_losses AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(pvp_losses.losses) AS losses
+         *   FROM pvp_losses
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM pvp_losses WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
         $pvp_losses = Conquer::where('conquers.wid', $world)->select(

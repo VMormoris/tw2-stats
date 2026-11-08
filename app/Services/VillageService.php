@@ -76,6 +76,8 @@ class VillageService
         
         //Extra information
         $village['conquers'] = Conquer::where('conquers.wid', $world)->where('vid', '=', $id)->whereColumn('prevpid', '!=', 'nextpid')->where('nextpid', '!=', 0)->count();
+        //History data for the graph: the village's points at every hour of the past 3 days,
+        //the last held value carried forward up to the last dump the village was in
         $history = History::villages($world)->hourly([$id], ['points'], now()->subDays(3))
             ->orderBy('timestamp')
             ->get();
