@@ -36,7 +36,7 @@ onMounted(() => {
         lastcrumb.value['name'] += 's';
         lastcrumb.value['url'] += 's';
         crumbs.value.push(lastcrumb.value);
-        url += `?id=${params['id']}`;
+        url += `?id=${encodeURIComponent(params['id'])}`;
         lastcrumb.value = { 'name': props.name, 'url': url };
 
         if(params.hasOwnProperty('view') && params.hasOwnProperty('show'))
@@ -50,7 +50,7 @@ onMounted(() => {
     function addview(view, show='')
     {
         if(view != 'overview')
-            url += `&view=${view}`;
+            url += `&view=${encodeURIComponent(view)}`;
         if(show === '')
             show = 'all';
 
@@ -61,7 +61,7 @@ onMounted(() => {
             lastcrumb.value = { 'name': map[view], 'url': url };
             if(view === 'conquers')
             {
-                url += show === 'all' ? '' : `&show=${show}`;
+                url += show === 'all' ? '' : `&show=${encodeURIComponent(show)}`;
                 crumbs.value.push(lastcrumb.value);
                 lastcrumb.value = { 'name': formalize(show), 'url': url };
             }
@@ -73,7 +73,7 @@ onMounted(() => {
             lastcrumb.value = { 'name': map[view], 'url': url };
             if(view === 'conquers')
             {
-                url += show === 'all' ? '' : `&show=${show}`;
+                url += show === 'all' ? '' : `&show=${encodeURIComponent(show)}`;
                 crumbs.value.push(lastcrumb.value);
                 lastcrumb.value = { 'name': formalize(show), 'url': url };
             }
