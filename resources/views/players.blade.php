@@ -24,5 +24,5 @@
         <leaderboard :endpoint="'players'" :title="'Players\' Ranking'" :placeholder="'Search Player'"></leaderboard>
     </div>
 </div>
-<script src="{{ asset('/js/app.js') }}"></script>
+@vite('resources/js/app.js')
 @endsection

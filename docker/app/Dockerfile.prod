@@ -1,0 +1,37 @@
+# Production image: the code, its dependencies and the built assets are baked
+# in, so nothing is mounted from the checkout.
+FROM node:26 AS assets
+
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js .
+COPY resources resources
+RUN npm run build
+
+FROM php:8.4-apache
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev libzip-dev unzip \
+    && docker-php-ext-install bcmath pdo_pgsql zip \
+    && rm -rf /var/lib/apt/lists/* \
+    && a2enmod rewrite \
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY docker/app/apache.conf /etc/apache2/sites-available/000-default.conf
+
+WORKDIR /var/www/tw2-stats
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
+
+COPY . .
+COPY --from=assets /build/public/build public/build
+# The storage directories are left out of the build context, see .dockerignore
+RUN composer dump-autoload --optimize --no-dev \
+    && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+COPY docker/app/entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["apache2-foreground"]

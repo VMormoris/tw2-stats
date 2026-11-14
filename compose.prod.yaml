@@ -1,0 +1,111 @@
+# Production environment. The values come from .env.production (see
+# .env.production.example); with these set, the plain docker compose commands
+# and the database/migration scripts use it:
+#   export COMPOSE_FILE=compose.prod.yaml COMPOSE_ENV_FILES=.env.production
+#   docker compose up -d --build
+#
+# TLS is left to a reverse proxy, e.g. Nginx Proxy Manager: the app joins the
+# proxy's network (PROXY_NETWORK) as tw2-stats, so the proxy forwards to
+# http://tw2-stats:80 and no port is published on the host.
+name: tw2-stats
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env.production}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.production}
+      DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD in .env.production}
+      TZ: Europe/London
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./docker/db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ./database/initdb.d:/initdb:ro
+    # The app is on the proxy's network too, where db can be another service
+    networks:
+      default:
+        aliases: [tw2-stats-db]
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      TZ: Europe/London
+      APP_NAME: tw2-stats
+      APP_URL: ${APP_URL:?set APP_URL in .env.production}
+      APP_KEY: ${APP_KEY:?set APP_KEY in .env.production}
+      LOG_CHANNEL: stderr
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      DB_HOST: tw2-stats-db
+      DB_PORT: 5432
+      DB_DATABASE: tw2-stats
+      DB_USERNAME: api
+      DB_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      default:
+      proxy:
+        aliases: [tw2-stats]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dumper:
+    build:
+      context: .
+      dockerfile: docker/dumper/Dockerfile
+    profiles: [dumper]
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGDATABASE: tw2-stats
+      PGUSER: tw2-stats
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+    secrets:
+      - accounts
+    volumes:
+      - dumper-cache:/dumper/.cache
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backup:
+    image: postgres:18
+    restart: unless-stopped
+    command: ["/backup.sh"]
+    environment:
+      TZ: Europe/London
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./docker/backup/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  proxy:
+    name: ${PROXY_NETWORK:?set PROXY_NETWORK in .env.production}
+    external: true
+
+volumes:
+  db-data:
+  dumper-cache:
+
+secrets:
+  accounts:
+    file: ./docker/dumper/accounts.json

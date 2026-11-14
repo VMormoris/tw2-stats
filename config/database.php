@@ -77,6 +77,21 @@ return [
             'sslmode' => 'prefer',
         ],
 
+        // Used by world:create, which asks for the password if it isn't set
+        'world-admin' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT'),
+            'database' => env('DB_DATABASE'),
+            'username' => env('DB_ADMIN_USERNAME', 'tw2-stats'),
+            'password' => env('DB_ADMIN_PASSWORD'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'schema' => 'public',
+            'sslmode' => 'prefer',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),

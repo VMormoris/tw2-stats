@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import TableComponent from '../tables/templates/TableComponent.vue';
-import { ScatterChart } from 'vue-chart-3';
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { ScatterChart } from '../../charts';
 
 const world = ref('');
 const link = ref({ 'tribe': '', 'player': '' });
@@ -108,7 +106,7 @@ function updateRankAndGraph(endpoint, obj)
         </div>
 
         <div class="mt-5 mb-2" v-if="!loadingTribe">
-            <ScatterChart :chartData="graphdata.tribe" :options="options"/>
+            <ScatterChart :data="graphdata.tribe" :options="options"/>
         </div>
 
     </div>
@@ -123,7 +121,7 @@ function updateRankAndGraph(endpoint, obj)
             <table-component :headers="headers.player" :rows="rows.player" :loading="loadingPlayer"></table-component>
         </div>
         <div class="mt-5 mb-2" v-if="!loadingPlayer">
-            <ScatterChart :chartData="graphdata.player" :options="options"/>
+            <ScatterChart :data="graphdata.player" :options="options"/>
         </div>
 
     </div>

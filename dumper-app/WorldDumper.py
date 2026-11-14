@@ -1,14 +1,15 @@
 from tw2client import EXIT_FAILURE, tw2Client as tw2c
 import psycopg2 as pgdb
+import threading
 import time
 
-#Password for tw2-stats Database user
-PASSWORD = '<your_password>'
+#A dump that takes longer is given up until the next hour
+TIMEOUT = 30 * 60.0
 
 upsert_tribes = '''
-INSERT INTO tribes(id, name, nname, tag, active, members, points, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
-VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (id) DO UPDATE SET
+INSERT INTO tribes(wid, id, name, nname, tag, active, members, points, offbash, defbash, totalbash, rankno, villages, vp, timestamp)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (wid, id) DO UPDATE SET
     id = %s,
     name = %s, nname = %s, tag = %s,
     active = %s,
@@ -22,9 +23,9 @@ ON CONFLICT (id) DO UPDATE SET
 '''
 
 upsert_players = '''
-INSERT INTO players(id, name, nname, tid, villages, points, offbash, defbash, totalbash, rankno, vp, timestamp)
-VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (id) DO UPDATE SET
+INSERT INTO players(wid, id, name, nname, tid, villages, points, offbash, defbash, totalbash, rankno, vp, timestamp)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (wid, id) DO UPDATE SET
     id = %s,
     name = %s, nname = %s,
     tid = %s,
@@ -37,9 +38,9 @@ ON CONFLICT (id) DO UPDATE SET
 '''
 
 upsert_villages = '''
-INSERT INTO villages (id, name, nname, pid, tid, x, y, points, provname, timestamp)
-VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (id) DO UPDATE SET
+INSERT INTO villages (wid, id, name, nname, pid, tid, x, y, points, provname, timestamp)
+VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (wid, id) DO UPDATE SET
     id = %s,
     name = %s, nname = %s,
     pid = %s, tid = %s,
@@ -77,6 +78,9 @@ class WorldDumper:
         self.__world = settings['world']
         self.__timestamp = None
         self.__state = False
+        #Set when the dump is finished or has failed
+        self.__done = threading.Event()
+        self.__failed = False
         self.__command = { 
             'type': 'Map/getVillagesByArea',
             'data': {
@@ -89,19 +93,40 @@ class WorldDumper:
         return self.__state
 
     def start(self):
-        '''Start the proccess of taking a dump
+        '''Take a dump, retrying until it's finished or has taken longer than TIMEOUT
         '''
-        ts = time.localtime()
-        self.__state = False
-        self.__timestamp = time.strftime('%Y-%m-%d %H:00:00', ts)
-        print('Attempting loggin')
-        self.__client.emit('Authentication/login', { 'name': self.__name, 'pass': self.__pass }, self.__onlogin)
-        time.sleep(10)
-        if self.__client.totalEmits() <= 2:
-            print('Queue empty!!!')
+        deadline = time.monotonic() + TIMEOUT
+        while True:
+            ts = time.localtime()
             self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__timestamp = time.strftime('%Y-%m-%d %H:00:00', ts)
+            self.__done.clear()
+            self.__failed = False
+            print('Attempting loggin')
+            self.__client.emit('Authentication/login', { 'name': self.__name, 'pass': self.__pass }, self.__onlogin)
+            time.sleep(10)
+            if self.__client.totalEmits() <= 2 and not self.__done.is_set():
+                print('Queue empty!!!')
+                self.__state = False
+                self.__client.restart(deadline)
+            elif not self.__done.wait(max(deadline - time.monotonic(), 0)):
+                break
+            elif not self.__failed:
+                return
+            else:
+                time.sleep(120.0)
+                self.__state = False
+                self.__client.restart(deadline)
+            if time.monotonic() >= deadline:
+                break
+        print('Giving up on', self.__world, 'until the next hour')
+        self.__client.disconnect()
+
+    def __fail(self):
+        '''Has start() retry the dump
+        '''
+        self.__failed = True
+        self.__done.set()
 
     def __onlogin(self, obj):
         '''Callback for autetication attempt
@@ -141,10 +166,7 @@ class WorldDumper:
         '''Callback for villages
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -180,10 +202,7 @@ class WorldDumper:
         '''Callback for tribes
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -216,10 +235,7 @@ class WorldDumper:
         '''Callback for players
         '''
         if obj['type'] == 'System/error' or obj['type'] == 'Exception/ErrorException':
-            time.sleep(120.0)
-            self.__state = False
-            self.__client.restart()
-            self.start()
+            self.__fail()
             return
         elif obj['type'] == 'Achievement/progress':
             print('Ignoring:', obj['type'])
@@ -254,21 +270,18 @@ class WorldDumper:
         players = self.__data['players']
         villages = self.__data['villages']
         print('Starting updating databases')
-        conn = pgdb.connect(database='tw2-stats', user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
+        #Connects with the PG* environment variables
+        conn = pgdb.connect('')
         cur = conn.cursor()
         cur.execute(update_world, (len(tribes), len(players), len(villages), self.__world))
         conn.commit()
-        cur.close()
-        conn.close()
 
-        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
-        cur = conn.cursor()
         #Update tribes
-        query = 'UPDATE tribes SET active = false WHERE true;'
-        cur.execute(query)
+        query = 'UPDATE tribes SET active = false WHERE wid = %s;'
+        cur.execute(query, (self.__world,))
         for tribe in tribes:
             params = (
-                tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp,
+                self.__world, tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp,
                 tribe['tribe_id'], tribe['name'], tribe['name'].lower(), tribe['tag'], True, tribe['members'], tribe['points'], tribe['bash_points_off'], tribe['bash_points_def'], tribe['bash_points_total'], tribe['rank'], tribe['villages'], tribe['victory_points'], self.__timestamp
             )
             cur.execute(upsert_tribes, params)
@@ -279,7 +292,7 @@ class WorldDumper:
             if player['tribe_id']:
                 tid = player['tribe_id']
             params = (
-                player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp,
+                self.__world, player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp,
                 player['character_id'], player['name'], player['name'].lower(), tid, player['villages'], player['points'], player['bash_points_off'], player['bash_points_def'], player['bash_points_total'], player['rank'], player['victory_points'], self.__timestamp
             )
             cur.execute(upsert_players, params)
@@ -293,7 +306,7 @@ class WorldDumper:
             if village['character_id']:
                 pid = village['character_id']
             params = (
-                village['id'], village['name'], village['name'].lower(), pid, tid, village['x'], village['y'], village['points'], village['province_name'], self.__timestamp,
+                self.__world, village['id'], village['name'], village['name'].lower(), pid, tid, village['x'], village['y'], village['points'], village['province_name'], self.__timestamp,
                 village['id'], village['name'], village['name'].lower(), pid, tid, village['x'], village['y'], village['points'], village['province_name'], self.__timestamp,
             )
             cur.execute(upsert_villages, params)
@@ -302,12 +315,4 @@ class WorldDumper:
         cur.close()
         conn.close()
         print('Done updating databases')
-
-        #Recluster database
-        conn = pgdb.connect(database=self.__world, user='tw2-stats', host='db.tw2-stats', password=PASSWORD)
-        conn.set_isolation_level(pgdb.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        cur = conn.cursor()
-        cur.execute('CLUSTER;')
-        conn.commit()
-        cur.close()
-        conn.close()
+        self.__done.set()

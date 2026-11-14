@@ -24,24 +24,31 @@ function GET(url, args, callback)
 }
 
 /**
+ * Builds an encoded query string from the given arguments
+ * @param {object} args Object containing the arguments to be encoded
+ * @param {function} skip Optional callback that returns true for the arguments that should be left out
+ * @returns {string} The encoded query string, prefixed with '?', or an empty string when no argument is left
+ */
+function query_string(args, skip = null)
+{
+    const query = new URLSearchParams();
+    for(const prop in args)
+    {
+        if(skip && skip(prop, args[prop]))
+            continue;
+        query.append(prop, args[prop]);
+    }
+    const str = query.toString();
+    return str === '' ? '' : '?' + str;
+}
+
+/**
  * Join the given url and arguments in new get like url
  * @param {string} url The url of the endpoint that will handle the request
  * @param {object} args Object containing the extra arguments to be appended on the url
  * @returns {string} The newly created get like url with the arguments appended to it
  */
-function join(url, args)
-{
-    let first = true;
-    let fullurl = url;
-    for(const prop in args)
-    {
-        if(args[prop] === '')
-            continue;
-        fullurl += (first ? '?' : '&') + `${prop}=${args[prop]}`; 
-        if(first) first = false;
-    }
-    return fullurl;
-}
+function join(url, args) { return url + query_string(args, (name, value) => value === ''); }
 
 /**
  * Checks whether the given to keycode corresponds to a valid character
@@ -52,23 +59,22 @@ function ischar(keycode) { return (keycode > 47 && keycode < 58)   || keycode ==
 
 /**
  * Extracts get parameters from a given url
- * @param {String} url The url from which the get parameters will be extracted
+ * @param {String} url The url (or just the query string) from which the get parameters will be extracted
  * @returns {object} Returns an object containing the parameters
+ * @note Only the id, page and items parameters are converted to numbers (when they hold an integer),
+ *  every other value (e.g. filter, view, show) is kept as the string that was decoded from the url
  */
 function get_params(url)
 {
-    if(!url.includes('?'))//No get params
+    const start = url.indexOf('?');
+    const raw = start === -1 ? '' : url.substring(start + 1).split('#')[0];
+    if(raw === '')//No get params
         return { 'page': 1 };
-    const raw = url.split('?')[1];//Raw parameters string
-    const tokens = raw.split('&');
+
+    const numeric = ['id', 'page', 'items'];
     let obj = {};
-    for(let i = 0; i < tokens.length; i++)
-    {
-        const token = tokens[i];
-        const name = token.split('=')[0];
-        const value = token.split('=')[1];
-        obj[name] = isNaN(value) ? value : parseInt(value);
-    }
+    for(const [name, value] of new URLSearchParams(raw))
+        obj[name] = numeric.includes(name) && /^-?\d+$/.test(value) ? parseInt(value) : value;
     return obj;
 }
 
@@ -145,22 +151,14 @@ function asString(timestamp)
  */
 function build_url_params(reqobj)
 {
-    let params = '';
-    let first = true;
-    for(const prop in reqobj)
-    {
-        const value = reqobj[prop];
-        if
-        (//Ingore default values
-            (prop === 'page' && value === 1 ) ||
-            (prop === 'filter' && value === '') ||
-            (prop === 'items' && value === 12) ||
-            (prop === 'view' && value === 'overview') ||
-            (prop === 'show' && value === 'all')
-        ) continue;
-        params += (first ? '?' : '&') + `${prop}=${value}`;
-        if(first) first = false;
-    }
+    const params = query_string(reqobj, (prop, value) =>
+        //Ingore default values
+        (prop === 'page' && value === 1 ) ||
+        (prop === 'filter' && value === '') ||
+        (prop === 'items' && value === 12) ||
+        (prop === 'view' && value === 'overview') ||
+        (prop === 'show' && value === 'all')
+    );
 
     const fullurl = document.location.pathname + params;
     window.history.replaceState(null, null, fullurl);
