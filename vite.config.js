@@ -17,7 +17,7 @@ export default defineConfig({
             },
         }),
     ],
-    // Reachable from the host when npm run dev runs in the node container
+    // Reachable from the host when npm run dev runs in the Sail app container
     server: {
         host: '0.0.0.0',
         port: 5173,

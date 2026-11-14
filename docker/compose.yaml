@@ -25,15 +25,27 @@ services:
     ports:
       - 127.0.0.1:5432:5432
 
+  # Laravel Sail's runtime: start it with vendor/bin/sail up -d (see README.md)
   app:
     build:
-      context: ..
-      dockerfile: docker/app/Dockerfile
+      context: ../vendor/laravel/sail/runtimes/8.5
       args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    # Overrides the DB_* values in the application's .env
+        WWWGROUP: ${WWWGROUP:-1000}
+        NODE_VERSION: '26'
+    image: tw2-stats-sail
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    # Overrides the DB_* values in the application's .env. The ports are
+    # literal, since vendor/bin/sail exports its own APP_PORT and DB_PORT.
     environment:
+      WWWUSER: ${WWWUSER:-1000}
+      LARAVEL_SAIL: 1
+      XDEBUG_MODE: ${SAIL_XDEBUG_MODE:-off}
+      XDEBUG_CONFIG: ${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}
+      # Several workers serve the pages' parallel API requests, which needs
+      # --no-reload: restart the app after changing .env
+      SUPERVISOR_PHP_COMMAND: /usr/bin/php -d variables_order=EGPCS /var/www/html/artisan serve --host=0.0.0.0 --port=80 --no-reload
+      PHP_CLI_SERVER_WORKERS: 4
       TZ: Europe/London
       DB_HOST: db
       DB_PORT: 5432
@@ -41,9 +53,11 @@ services:
       DB_USERNAME: api
       DB_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ..:/var/www/tw2-stats
+      - ..:/var/www/html
     ports:
       - 127.0.0.1:8000:80
+      # Vite's development server: vendor/bin/sail npm run dev
+      - 127.0.0.1:5173:5173
     depends_on:
       db:
         condition: service_healthy
@@ -68,20 +82,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  # Asset builds: docker compose run --rm node npm ci && docker compose run --rm node npm run build
-  # Dev server: docker compose run --rm --service-ports node npm run dev
-  node:
-    image: node:latest
-    profiles: [tools]
-    user: ${UID:-1000}:${GID:-1000}
-    working_dir: /var/www/tw2-stats
-    ports:
-      - 127.0.0.1:5173:5173
-    environment:
-      npm_config_cache: /tmp/.npm
-    volumes:
-      - ..:/var/www/tw2-stats
 
 volumes:
   db-data:
