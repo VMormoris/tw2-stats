@@ -16,7 +16,7 @@ function Update(obj)
     const increase = ' <a class="text-success no-u">&uarr;</a>';
     const decrease = ' <a class="text-danger no-u">&darr;</a>';
     //A row without a value from yesterday has nothing to be compared against
-    const compare = (old, current, higher, lower) => old == null || old === current ? nochange : (old < current ? higher : lower);
+    const getChangeIndicator = (old, current, onIncrease, onDecrease) => old == null || old === current ? nochange : (old < current ? onIncrease : onDecrease);
     const url = document.location.href;
     const world = extract_world(url);
 
@@ -44,13 +44,13 @@ function Update(obj)
         rows.forEach((row, index) => {
             const villstr = row['villages'] === 0 ? row['villages'] : `<a href="/${world}/player?id=${row['id']}&view=villages">${format(row['villages'])}</a>`;
             const extra = {
-                'rankno': compare(row['oldrank'], row['rankno'], decrease, increase),
-                'points': compare(row['oldpoints'], row['points'], increase, decrease),
-                'villages': compare(row['oldvillages'], row['villages'], increase, decrease),
-                'offbash': compare(row['oldoffbash'], row['offbash'], increase, decrease),
-                'defbash': compare(row['olddefbash'], row['defbash'], increase, decrease),
-                'totalbash': compare(row['oldtotalbash'], row['totalbash'], increase, decrease),
-                'vp': compare(row['oldvp'], row['vp'], increase, decrease),
+                'rankno': getChangeIndicator(row['oldrank'], row['rankno'], decrease, increase),
+                'points': getChangeIndicator(row['oldpoints'], row['points'], increase, decrease),
+                'villages': getChangeIndicator(row['oldvillages'], row['villages'], increase, decrease),
+                'offbash': getChangeIndicator(row['oldoffbash'], row['offbash'], increase, decrease),
+                'defbash': getChangeIndicator(row['olddefbash'], row['defbash'], increase, decrease),
+                'totalbash': getChangeIndicator(row['oldtotalbash'], row['totalbash'], increase, decrease),
+                'vp': getChangeIndicator(row['oldvp'], row['vp'], increase, decrease),
             };
 
             obj['rows'].push({
