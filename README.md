@@ -49,7 +49,7 @@ After updating:
 3. If you have a `compose.override.yaml`, change its mounts into the app container from `/var/www/tw2-stats` to `/var/www/html`, and if it overrides the app's `ports`, keep `5173:5173` in the list for Vite.
 4. Install Sail with the `docker run ... composer install --no-scripts` command above, then run `sail up -d` and `sail composer install`. The app container is replaced by the Sail one; the old `node` service is gone, `sail npm` replaces it.
 
-The app container now runs PHP 8.5 and serves with `php artisan serve`, while `compose.prod.yaml` runs PHP 8.4 with PHP-FPM behind Nginx, whose configuration reproduces the routing rules from `public/.htaccess` (see `docker/web/default.conf`). The server starts with `--no-reload`, so restart it (`sail restart app`) after editing `.env`.
+The app container now runs PHP 8.5 and serves with `php artisan serve`, while `compose.prod.yaml` runs PHP 8.4 with PHP-FPM behind Nginx, whose routing rules are in `docker/web/default.conf`. The server starts with `--no-reload`, so restart it (`sail restart app`) after editing `.env`.
 
 To go back, switch to the commit before Sail (`git switch --detach <commit>`, which refuses to overwrite uncommitted changes), rename the two variables in `docker/.env` back, and run `docker compose up -d --build app`. The database volume is the same in both setups.
 
