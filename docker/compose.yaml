@@ -1,0 +1,92 @@
+# Development environment, included by the compose.yaml at the repository
+# root. Values come from docker/.env (see docker/.env.example); paths are
+# relative to this directory.
+
+x-db: &db
+  environment:
+    POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in docker/.env}
+    DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in docker/.env}
+    DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD in docker/.env}
+    TZ: Europe/London
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+
+services:
+  db:
+    <<: *db
+    image: postgres:latest
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ../database/initdb.d:/initdb:ro
+    ports:
+      - 127.0.0.1:5432:5432
+
+  # Laravel Sail's runtime: start it with vendor/bin/sail up -d (see README.md)
+  app:
+    build:
+      context: ../vendor/laravel/sail/runtimes/8.5
+      args:
+        WWWGROUP: ${WWWGROUP:-1000}
+        NODE_VERSION: '26'
+    image: tw2-stats-sail
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    # Overrides the DB_* values in the application's .env. The ports are
+    # literal, since vendor/bin/sail exports its own APP_PORT and DB_PORT.
+    environment:
+      WWWUSER: ${WWWUSER:-1000}
+      LARAVEL_SAIL: 1
+      XDEBUG_MODE: ${SAIL_XDEBUG_MODE:-off}
+      XDEBUG_CONFIG: ${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}
+      # Several workers serve the pages' parallel API requests, which needs
+      # --no-reload: restart the app after changing .env
+      SUPERVISOR_PHP_COMMAND: /usr/bin/php -d variables_order=EGPCS /var/www/html/artisan serve --host=0.0.0.0 --port=80 --no-reload
+      PHP_CLI_SERVER_WORKERS: 4
+      TZ: Europe/London
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: tw2-stats
+      DB_USERNAME: api
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ..:/var/www/html
+    ports:
+      - 127.0.0.1:8000:80
+      # Vite's development server: vendor/bin/sail npm run dev
+      - 127.0.0.1:5173:5173
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Logs into the game, so it only runs when asked: docker compose --profile dumper up -d
+  # Needs docker/dumper/accounts.json (see accounts.example.json)
+  dumper:
+    build:
+      context: ..
+      dockerfile: docker/dumper/Dockerfile
+    profiles: [dumper]
+    # libpq's settings, as the tw2-stats role that owns the tables
+    environment:
+      PGHOST: db
+      PGDATABASE: tw2-stats
+      PGUSER: tw2-stats
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+    secrets:
+      - accounts
+    volumes:
+      - dumper-cache:/dumper/.cache
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  dumper-cache:
+
+secrets:
+  accounts:
+    file: ./dumper/accounts.json

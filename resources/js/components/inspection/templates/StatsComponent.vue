@@ -1,9 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import TableComponent from '../../tables/templates/TableComponent.vue';
-import { PieChart } from 'vue-chart-3';
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { PieChart } from '../../../charts';
 
 const props = defineProps({
     'subtitle': String,
@@ -34,7 +32,7 @@ const options = ref({ 'responsive': true, 'plugins': { 'legend': { 'position': '
         </table-component>
     </div>
     <div class="col">
-        <PieChart :chartData="graphData" :options="options"/>
+        <PieChart :data="graphData" :options="options"/>
     </div>
 </div>
 </template>

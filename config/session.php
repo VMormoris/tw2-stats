@@ -22,6 +22,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Serialization
+    |--------------------------------------------------------------------------
+    |
+    | Sessions are stored as json instead of serialized PHP, so a tampered
+    | session can't unserialize arbitrary objects.
+    |
+    */
+
+    'serialization' => 'json',
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Lifetime
     |--------------------------------------------------------------------------
     |

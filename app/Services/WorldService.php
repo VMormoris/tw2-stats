@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Models\Conquer;
 use App\Models\Tribe;
-use App\Models\TribeHistory;
 use App\Models\Player;
-use App\Models\PlayerHistory;
 use App\Models\Village;
 use App\Models\World;
+
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class for handling player logic on our app
@@ -40,7 +40,7 @@ class WorldService
     public function tribes(string $world): array
     {
         //Top 5 tribes
-        $best5 = Tribe::on($world)->select(
+        $best5 = Tribe::where('tribes.wid', $world)->select(
             'rankno',
             'id',
             'name',
@@ -53,12 +53,11 @@ class WorldService
             ->orderBy('rankno')
             ->take(5)
             ->get();
-        //History data for graphs
-        $history = TribeHistory::on($world)->select('tid AS id', 'rankno', 'timestamp')
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
-            ->whereIn('tid', function($query){
-                $query->select('id')->from('tribes')->where('rankno', '<=', 5);
-            })
+        //History data for graphs: the rank at every hour of the past 7 days of the tribes
+        //ranked 5 or better now, rebuilt from their history (carried forward up to the last
+        //dump each was in). Only rankno <= 5 is checked, not the filters of the top 5 above
+        $top5 = DB::table('tribes')->select('id')->where('tribes.wid', $world)->where('rankno', '<=', 5);
+        $history = History::tribes($world)->hourly($top5, ['tid AS id', 'rankno'], now()->subDays(7))
             ->orderBy('timestamp')
             ->get();
 
@@ -76,8 +75,8 @@ class WorldService
      */
     public function players(string $world): array
     {
-        //Top 5 tribes
-        $best5 = Player::on($world)->select(
+        //Top 5 players
+        $best5 = Player::where('players.wid', $world)->select(
             'rankno',
             'id',
             'name',
@@ -88,12 +87,11 @@ class WorldService
             ->orderBy('rankno')
             ->take(5)
             ->get();
-        //History data for graphs
-        $history = PlayerHistory::on($world)->select('pid AS id', 'rankno', 'timestamp')
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-7 days', time())))
-            ->whereIn('pid', function($query){
-                $query->select('id')->from('players')->where('rankno', '<=', 5);
-            })
+        //History data for graphs: the rank at every hour of the past 7 days of the players
+        //ranked 5 or better now, rebuilt from their history (carried forward up to the last
+        //dump each was in). Only rankno <= 5 is checked, not the filters of the top 5 above
+        $top5 = DB::table('players')->select('id')->where('players.wid', $world)->where('rankno', '<=', 5);
+        $history = History::players($world)->hourly($top5, ['pid AS id', 'rankno'], now()->subDays(7))
             ->orderBy('timestamp')
             ->get();
 
@@ -112,18 +110,18 @@ class WorldService
     public function villages(string $world): array
     {
         //Last 5 conquers
-        $best5 = Conquer::on($world)->select(
+        $best5 = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid', 'villages.name AS vname',
             'conquers.prevpid', 'pl1.name AS old owner',
             'conquers.nextpid', 'pl2.name AS new owner',
             'conquers.prevtid', 'tr1.name AS old tribe',
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.timestamp',
-        )->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
+        )->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
             ->orderBy('timestamp', 'DESC')
             ->take(5)
             ->get();
@@ -140,8 +138,8 @@ class WorldService
      */
     private function domination_villages(string $world)
     {
-        return Village::on($world)->whereIn('tid', function($query){
-            $query->select('id')->from('tribes')->where('rankno', '<=', 10)->where('active', '=', true);
+        return Village::where('villages.wid', $world)->whereIn('tid', function($query) use ($world){
+            $query->select('id')->from('tribes')->where('tribes.wid', $world)->where('rankno', '<=', 10)->where('active', '=', true);
         })->count();
     }
 

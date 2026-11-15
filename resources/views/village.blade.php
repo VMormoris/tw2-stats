@@ -21,5 +21,5 @@
 <div id="app">
     <village name="{{ $name }}"></village>
 </div>
-<script src="{{ asset('/js/app.js') }}"></script>
+@vite('resources/js/app.js')
 @endsection

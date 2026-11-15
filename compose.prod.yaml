@@ -1,0 +1,174 @@
+# Production environment. The values come from .env.production (see
+# .env.production.example); with these set, the plain docker compose commands
+# and the database/migration scripts use it:
+#   export COMPOSE_FILE=compose.prod.yaml COMPOSE_ENV_FILES=.env.production
+#   docker compose up -d --build
+#
+# TLS is left to a reverse proxy, e.g. Nginx Proxy Manager: the web service
+# (Nginx) joins the proxy's network (PROXY_NETWORK) as tw2-stats, so the proxy
+# forwards to http://tw2-stats:80 and no port is published on the host. PHP-FPM
+# (the app service) is only on the internal networks.
+#
+# Maintenance commands run in a container of the app image that is removed
+# afterwards, e.g.:
+#   docker compose run --rm cli php artisan world:create en130
+name: tw2-stats
+
+# The settings of Laravel, shared by the app and cli services
+x-laravel-env: &laravel-env
+  TZ: Europe/London
+  APP_NAME: tw2-stats
+  APP_URL: ${APP_URL:?set APP_URL in .env.production}
+  APP_KEY: ${APP_KEY:?set APP_KEY in .env.production}
+  LOG_CHANNEL: stderr
+  DB_HOST: tw2-stats-db
+  DB_PORT: 5432
+  DB_DATABASE: tw2-stats
+  DB_USERNAME: api
+  DB_PASSWORD: ${DB_PASSWORD}
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env.production}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.production}
+      DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD in .env.production}
+      TZ: Europe/London
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./docker/db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ./database/initdb.d:/initdb:ro
+    # A name of its own, since the app is on another network too
+    networks:
+      default:
+        aliases: [tw2-stats-db]
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile.prod
+      target: app
+    image: tw2-stats-php
+    restart: unless-stopped
+    environment:
+      <<: *laravel-env
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      # Written at start, by the entrypoint, into a directory only www-data can read
+      APP_CONFIG_CACHE: /run/tw2-stats/config.php
+      APP_ROUTES_CACHE: /run/tw2-stats/routes.php
+    tmpfs:
+      - /run/tw2-stats:uid=33,gid=33,mode=0700
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      default:
+      fastcgi:
+        aliases: [tw2-stats-php]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile.prod
+      target: web
+    image: tw2-stats-web
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    # Lets the nginx user listen on port 80
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: 0
+    environment:
+      TZ: Europe/London
+    # Renders the home page, so it checks PHP and the Vite manifest too, but not the database
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      fastcgi:
+      proxy:
+        aliases: [tw2-stats]
+    depends_on:
+      app:
+        condition: service_healthy
+
+  # Only started by docker compose run. The default connection is the
+  # read-only api role; world:create connects as the tw2-stats role, with the
+  # password the dumper gets.
+  cli:
+    image: tw2-stats-php
+    pull_policy: never
+    profiles: [maintenance]
+    command: ["php", "artisan", "list"]
+    environment:
+      <<: *laravel-env
+      DB_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dumper:
+    build:
+      context: .
+      dockerfile: docker/dumper/Dockerfile
+    profiles: [dumper]
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGDATABASE: tw2-stats
+      PGUSER: tw2-stats
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+    secrets:
+      - accounts
+    volumes:
+      - dumper-cache:/dumper/.cache
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backup:
+    image: postgres:18
+    restart: unless-stopped
+    command: ["/backup.sh"]
+    environment:
+      TZ: Europe/London
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - ./docker/backup/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  # Between Nginx and PHP-FPM only
+  fastcgi:
+    internal: true
+  proxy:
+    name: ${PROXY_NETWORK:?set PROXY_NETWORK in .env.production}
+    external: true
+
+volumes:
+  db-data:
+  dumper-cache:
+
+secrets:
+  accounts:
+    file: ./docker/dumper/accounts.json

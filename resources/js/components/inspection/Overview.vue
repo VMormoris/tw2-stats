@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import InfoTable from '../tables/templates/InfoTable.vue';
-import { ScatterChart, BarChart } from 'vue-chart-3';
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import { ScatterChart, BarChart } from '../../charts';
 
 const props = defineProps({
     'endpoint': String,
@@ -114,14 +112,14 @@ onMounted(() => {
             const conquersendpoint = `/${world}/tribe?id=${props.id}&view=conquers`
             const conquers = `<a href="${conquersendpoint}">${all}</a>(<a href="${conquersendpoint}&show=gains">+${details['conquers']['gains']}</a>,<a href="${conquersendpoint}&show=losses">-${details['conquers']['losses']}</a>) Internally: <a href="${conquersendpoint}&show=internals">${details['conquers']['internals']}</a>`;
             const members = details['members'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=members">${details['members']}</a>`;
-            const changes = details['tchanges'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=members">${details['tchanges']}</a>`;
+            const changes = details['tchanges'] === 0 ? 0 : `<a href="/${world}/tribe?id=${props.id}&view=changes">${details['tchanges']}</a>`;
             info.value.push({ 'Rank': details['rankno'] });
             info.value.push({ 'Name': details['name'] });
             info.value.push({ 'Points': format(details['points']) });
             info.value.push({ 'Members': members });
-            info.value.push({ 'Average Points per Member': format(parseInt(details['points']/details['members'])) });
+            info.value.push({ 'Average Points per Member': details['members'] === 0 ? 'N/A' : format(parseInt(details['points']/details['members'])) });
             info.value.push({ 'Villages': format(details['villages']) });
-            info.value.push({ 'Average Points per Village': format(parseInt(details['points']/details['villages'])) });
+            info.value.push({ 'Average Points per Village': details['villages'] === 0 ? 'N/A' : format(parseInt(details['points']/details['villages'])) });
             info.value.push({ 'Member Changes': changes });
             info.value.push({ 'Conquers': conquers });
             info.value.push({ 'OBP': format(details['offbash']) });
@@ -143,7 +141,7 @@ onMounted(() => {
             info.value.push({ 'Tribe': tribe });
             info.value.push({ 'Points': format(details['points']) });
             info.value.push({ 'Villages': villages });
-            info.value.push({ 'Average Points per Village': format(parseInt(details['points']/details['villages'])) });
+            info.value.push({ 'Average Points per Village': details['villages'] === 0 ? 'N/A' : format(parseInt(details['points']/details['villages'])) });
             info.value.push({ 'Tribe Changes': changes });
             info.value.push({ 'Conquers': conquers });
             info.value.push({ 'OBP': format(details['offbash']) });
@@ -185,15 +183,15 @@ onMounted(() => {
             </div>
         </div>
         <div class="container col">
-            <ScatterChart :chartData="graphsData.points" :options="options.points" style="height: 320px"/>
-            <ScatterChart v-if="props.endpoint!='village'" :chartData="graphsData.rank" :options="options.rank" style="height: 320px"/>
+            <ScatterChart :data="graphsData.points" :options="options.points" style="height: 320px"/>
+            <ScatterChart v-if="props.endpoint!='village'" :data="graphsData.rank" :options="options.rank" style="height: 320px"/>
         </div>
     </div>
 
     <div class="text-center">Differnce in bash points in last 3 days</div>
-    <ScatterChart :chartData="graphsData.bash" :options="options.bash"/>
+    <ScatterChart :data="graphsData.bash" :options="options.bash"/>
     <div class="mt-2 mb-2">
-        <BarChart :chartData="graphsData.villages" :options="options.villages"/>
+        <BarChart :data="graphsData.villages" :options="options.villages"/>
     </div>
 </div>
 </template>

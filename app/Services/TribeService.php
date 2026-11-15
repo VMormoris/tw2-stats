@@ -6,7 +6,6 @@ use App\Models\Conquer;
 use App\Models\Player;
 use App\Models\Tribe;
 use App\Models\TribeHistory;
-use App\Models\PlayerHistory;
 use App\Models\TribeChange;
 use App\Models\Village;
 use App\Models\VillageHistory;
@@ -30,7 +29,7 @@ class TribeService
     public function leaderboard(string $world, string $filter, int $offset, int $items): array
     {
         //"Prepare" query for future use
-        $tribes = Tribe::on($world)->select(
+        $tribes = Tribe::where('tribes.wid', $world)->select(
             'rankno',
             'id',
             'name',
@@ -49,22 +48,22 @@ class TribeService
         $count = $tribes->count();
         $tribes = $tribes->skip($offset)->take($items)->get();
         
-        //Extra details(aka yesterday's rankno)
-        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
-        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
-        $details = TribeHistory::on($world)->select(
+        //Yesterday's comparison values: every field is its own MAX over the values the
+        //tribe held from yesterday 00:00 to 23:00, the value carried in from before 00:00
+        //included, so the fields are not one snapshot
+        $start = now()->subDays(1)->format('Y-m-d 00:00:00');
+        $end = now()->subDays(1)->format('Y-m-d 23:00:00');
+        $ids = DB::table('tribes')->select('id')->where('tribes.wid', $world)
+            ->where('nname', 'like', $filter)
+            ->where('active', '=', true)
+            ->where('id', '!=', 0)
+            ->orderBy('rankno', 'ASC')
+            ->skip($offset)
+            ->take($items);
+        $details = History::tribes($world)->held($ids, ['rankno', 'points', 'members', 'villages', 'offbash', 'defbash', 'totalbash', 'vp'], $start, $end)->select(
             'tid AS id',
-            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(members) AS oldmembers, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
-        )->whereIn('tid', function($query) use(&$filter, $offset, $items){
-            $query->select('id')->from('tribes')
-                ->where('nname', 'like', $filter)
-                ->where('active', '=', true)
-                ->where('id', '!=', 0)
-                ->orderBy('rankno', 'ASC')
-                ->skip($offset)
-                ->take($items);
-        })->whereBetween('timestamp', [$start, $end])
-            ->groupBy('tid')
+            DB::raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(members) AS oldmembers, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->groupBy('tid')
             ->get();
 
         return array('total' => $count, 'data' => $tribes, 'details' => $details);
@@ -79,7 +78,7 @@ class TribeService
     public function overview(string $world, int $id): array
     {
         //Basic tribe's information
-        $tribe = Tribe::on($world)->select(
+        $tribe = Tribe::where('tribes.wid', $world)->select(
             'rankno',
             'name',
             'points',
@@ -90,19 +89,19 @@ class TribeService
         )->where('id', '=', $id)->get()[0];
 
         //Extra information
-        $tribe['tchanges'] = TribeChange::on($world)->whereColumn('prevtid', '!=', 'nexttid')
+        $tribe['tchanges'] = TribeChange::where('tribe_changes.wid', $world)->whereColumn('prevtid', '!=', 'nexttid')
             ->where(function($query) use ($id){
                 $query->where('prevtid', '=', $id)
                 ->orWhere('nexttid', '=', $id);
             })->count();
 
-        $losses = Conquer::on($world)
+        $losses = Conquer::where('conquers.wid', $world)
             ->where('prevtid', '=', $id)
             ->count();
-        $gains = Conquer::on($world)
+        $gains = Conquer::where('conquers.wid', $world)
             ->where('nexttid', '=', $id)
             ->count();
-        $internals = Conquer::on($world)
+        $internals = Conquer::where('conquers.wid', $world)
             ->where('prevtid', '=', $id)
             ->where('nexttid', '=', $id)
             ->count();
@@ -110,22 +109,18 @@ class TribeService
         //AUB = A+B-(A^B)
         $all = $gains + $losses - $internals;
         
-        $history= TribeHistory::on($world)->select(
+        //History data for graphs: the values at every hour of the past 3 days, the last held
+        //value carried forward up to the last dump the tribe was in
+        $history = History::tribes($world)->hourly([$id], [
             'points',
             'rankno',
-            'offbash', 'defbash', 'totalbash',
-            'timestamp'
-        )->where('tid', '=', $id)
-            ->where('timestamp', '>', date('Y-m-d H:i:s', strtotime('-3 days', time())))
+            'offbash', 'defbash', 'totalbash'
+        ], now()->subDays(3))
             ->orderBy('timestamp')
             ->get();
 
-        $villages = TribeHistory::on($world)->select(
-            'villages',
-            'timestamp'
-        )->where('tid', '=', $id)
-            ->whereRaw('EXTRACT(HOUR FROM "timestamp") = 0')
-            ->orderBy('timestamp', 'DESC')->take(8)->get();
+        //The villages at the last 8 midnights, carried forward the same way
+        $villages = History::tribes($world)->daily($id, ['villages'], 8);
         
         $tribe['conquers'] = array(
             'all' => $all,
@@ -138,7 +133,7 @@ class TribeService
             'details' => $tribe,
             'graphs_data' => array(
                 'general' => $history,
-                'villages' => array_reverse($villages->toArray())
+                'villages' => $villages
             )
         );
     }
@@ -154,7 +149,7 @@ class TribeService
     public function history(string $world, int $id, int $offset, int $items): array
     {
         //"Prepare" query for tribe's history
-        $history = TribeHistory::on($world)->select(
+        $history = TribeHistory::where('tribes_history.wid', $world)->select(
             'tid',
             'members',
             'villages',
@@ -209,7 +204,7 @@ class TribeService
     public function members(string $world, int $id, string $filter, int $offset, int $items): array
     {
         //"Prepare" query for tribe's members
-        $members = Player::on($world)->select(
+        $members = Player::where('players.wid', $world)->select(
             'id',
             'name',
             'points',
@@ -225,21 +220,21 @@ class TribeService
         $count = $members->count();
         $members = $members->skip($offset)->take($items)->get();
 
-        //Extra details(aka yesterday's rankno)
-        $start = date('Y-m-d 00:00:00', strtotime('-1 days', time()));
-        $end = date('Y-m-d 23:00:00', strtotime('-1 days', time()));
-        $details = PlayerHistory::on($world)->select(
+        //Yesterday's comparison values: every field is its own MAX over the values the
+        //player held from yesterday 00:00 to 23:00, the value carried in from before 00:00
+        //included, so the fields are not one snapshot
+        $start = now()->subDays(1)->format('Y-m-d 00:00:00');
+        $end = now()->subDays(1)->format('Y-m-d 23:00:00');
+        $ids = DB::table('players')->select('id')->where('players.wid', $world)
+            ->where('nname', 'like', $filter)
+            ->where('id', '!=', 0)
+            ->orderBy('rankno', 'ASC')
+            ->skip($offset)
+            ->take($items);
+        $details = History::players($world)->held($ids, ['rankno', 'points', 'villages', 'offbash', 'defbash', 'totalbash', 'vp'], $start, $end)->select(
             'pid AS id',
-            DB::connection($world)->raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
-        )->whereIn('pid', function($query) use(&$filter, $offset, $items){
-            $query->select('id')->from('players')
-                ->where('nname', 'like', $filter)
-                ->where('id', '!=', 0)
-                ->orderBy('rankno', 'ASC')
-                ->skip($offset)
-                ->take($items);
-        })->whereBetween('timestamp', [$start, $end])
-            ->groupBy('pid')
+            DB::raw('MAX(rankno) AS oldrank, MAX(points) AS oldpoints, MAX(villages) AS oldvillages, MAX(offbash) AS oldoffbash, MAX(defbash) AS olddefbash, MAX(totalbash) AS oldtotalbash, MAX(vp) AS oldvp')
+        )->groupBy('pid')
             ->get();
 
         return array('total' => $count, 'data' => $members, 'details' => $details);
@@ -257,7 +252,7 @@ class TribeService
     public function villages(string $world, int $id, string $filter, int $offset, int $items) : array
     {
         //"Prepare" query for tribe's villages
-        $villages = Village::on($world)->select(
+        $villages = Village::where('villages.wid', $world)->select(
             'id',
             'name',
             'x', 'y',
@@ -286,7 +281,7 @@ class TribeService
     private function all(string $world, int $id, string $filter, int $offset, int $items)
     {
         //"Prepare" query for tribe conquers
-        $all = Conquer::on($world)->select(
+        $all = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -296,11 +291,11 @@ class TribeService
             'conquers.nexttid', 'tr2.name AS new tribe',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes AS tr1', 'tr1.id', '=', 'conquers.prevtid')
-            ->join('tribes AS tr2', 'tr2.id', '=', 'conquers.nexttid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes AS tr1', fn ($join) => $join->on('tr1.id', '=', 'conquers.prevtid')->where('tr1.wid', '=', $world))
+            ->join('tribes AS tr2', fn ($join) => $join->on('tr2.id', '=', 'conquers.nexttid')->where('tr2.wid', '=', $world))
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where('conquers.nextpid', '!=', 0)
             ->where(function($query) use ($id) {
@@ -336,7 +331,7 @@ class TribeService
     private function losses(string $world, int $id, string $filter, int $offset, int $items)
     {
         //"Prepare" query for tribe's losses
-        $losses = Conquer::on($world)->select(
+        $losses = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -346,10 +341,10 @@ class TribeService
             'conquers.nexttid', 'tribes.name AS new tribe',
             'conquers.points',
             'conquers.timestamp',
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes', 'tribes.id', '=', 'conquers.nexttid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes', fn ($join) => $join->on('tribes.id', '=', 'conquers.nexttid')->where('tribes.wid', '=', $world))
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where('conquers.nextpid', '!=', 0)
             ->where('conquers.prevtid', '=', $id)
@@ -381,7 +376,7 @@ class TribeService
     private function gains(string $world, int $id, string $filter, int $offset, int $items)
     {
         //"Prepare" query for Tribe's gains
-        $gains = Conquer::on($world)->select(
+        $gains = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -391,10 +386,10 @@ class TribeService
             'conquers.nexttid',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
-            ->join('tribes', 'tribes.id', '=', 'conquers.prevtid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
+            ->join('tribes', fn ($join) => $join->on('tribes.id', '=', 'conquers.prevtid')->where('tribes.wid', '=', $world))
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where('conquers.nextpid', '!=', 0)
             ->where('conquers.nexttid', '=', $id)
@@ -426,7 +421,7 @@ class TribeService
     private function internals(string $world, int $id, string $filter, int $offset, int $items)
     {
         //"Prepare" query for tribe's internals conquers
-        $internals = Conquer::on($world)->select(
+        $internals = Conquer::where('conquers.wid', $world)->select(
             'conquers.vid',
             'conquers.name',
             'villages.x', 'villages.y',
@@ -436,9 +431,9 @@ class TribeService
             'conquers.nexttid',
             'conquers.points',
             'conquers.timestamp'
-        )->join('players AS pl1', 'pl1.id', '=', 'conquers.prevpid')
-            ->join('villages', 'villages.id', '=', 'conquers.vid')
-            ->join('players AS pl2', 'pl2.id', '=', 'conquers.nextpid')
+        )->join('players AS pl1', fn ($join) => $join->on('pl1.id', '=', 'conquers.prevpid')->where('pl1.wid', '=', $world))
+            ->join('villages', fn ($join) => $join->on('villages.id', '=', 'conquers.vid')->where('villages.wid', '=', $world))
+            ->join('players AS pl2', fn ($join) => $join->on('pl2.id', '=', 'conquers.nextpid')->where('pl2.wid', '=', $world))
             ->whereColumn('conquers.prevpid', '!=', 'conquers.nextpid')
             ->where('conquers.nextpid', '!=', 0)
             ->where('conquers.nexttid', '=', $id)
@@ -469,7 +464,7 @@ class TribeService
     public function changes(string $world, int $id, int $offset, int $items)
     {
         //"Prepare" query for tribe's changes
-        $changes = TribeChange::on($world)->select(
+        $changes = TribeChange::where('tribe_changes.wid', $world)->select(
             'tribe_changes.pid', 'pl.name AS player',
             'tribe_changes.nexttid', 'tr.name AS new tribe',
             'tribe_changes.villages',
@@ -478,10 +473,12 @@ class TribeService
             'tribe_changes.rankno',
             'tribe_changes.vp',
             'tribe_changes.timestamp'
-        )->join('players AS pl', 'tribe_changes.pid', '=', 'pl.id')
-            ->join('tribes AS tr', 'tribe_changes.nexttid', '=', 'tr.id')
-            ->where('tribe_changes.prevtid', '=', $id)
-            ->orWhere('tribe_changes.nexttid', '=', $id)
+        )->join('players AS pl', fn ($join) => $join->on('tribe_changes.pid', '=', 'pl.id')->where('pl.wid', '=', $world))
+            ->join('tribes AS tr', fn ($join) => $join->on('tribe_changes.nexttid', '=', 'tr.id')->where('tr.wid', '=', $world))
+            ->where(function($query) use ($id){
+                $query->where('tribe_changes.prevtid', '=', $id)
+                    ->orWhere('tribe_changes.nexttid', '=', $id);
+            })
             ->orderBy('tribe_changes.timestamp', 'DESC');
         
         //Execute queries
@@ -521,52 +518,70 @@ class TribeService
     private function tvt_gains(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the tribes the tribe conquered villages from by number of conquers
+         * (one CTE row each):
+         *
          *   WITH tvt_gains AS
          *   (
          *       SELECT
-         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *          prevtid AS "tid",
-         *          COUNT(*) AS "gains"
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           prevtid AS tid,
+         *           COUNT(*) AS gains
          *       FROM conquers
-         *       WHERE nexttid = $id
+         *       WHERE conquers.wid = :world AND nexttid = :id
          *       GROUP BY prevtid
-         *       ORDER BY "gains" DESC
+         *       ORDER BY gains DESC
          *   )
-         *   SELECT tvt_gains."num", tr.id, tr.name AS "name", tvt_gains."gains" FROM tvt_gains
-         *   INNER JOIN tribes AS tr ON tr.id = tvt_gains."tid"
+         *
+         * A separate "SELECT COUNT(*) FROM tvt_gains" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH tvt_gains AS (...)
+         *   SELECT tvt_gains.num AS num, tr.id AS id, tr.name AS name, tvt_gains.gains AS gains
+         *   FROM tvt_gains
+         *   INNER JOIN tribes AS tr ON tr.id = tid AND tr.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH tvt_gains AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(tvt_gains.gains) AS gains
+         *   FROM tvt_gains
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM tvt_gains WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
-        $tvt_gains = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $tvt_gains = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'prevtid AS tid',
-            DB::connection($world)->raw('COUNT(*) AS gains')
+            DB::raw('COUNT(*) AS gains')
         )->where('nexttid', '=', $id)
             ->groupBy('prevtid')
             ->orderBy('gains', 'DESC');
 
-        $best6 = DB::connection($world)->table('tvt_gains')
+        $best6 = DB::table('tvt_gains')
         ->select(
             'tvt_gains.num AS num',
             'tr.id AS id',
             'tr.name AS name',
             'tvt_gains.gains AS gains'
         )->withExpression('tvt_gains', $tvt_gains)
-            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->join('tribes AS tr', fn ($join) => $join->on('tr.id', '=', 'tid')->where('tr.wid', '=', $world))
             ->whereBetween('num', [1, 6]);
         
-        $total = DB::connection($world)->table('tvt_gains')->withExpression('tvt_gains', $tvt_gains)->count();
+        $total = DB::table('tvt_gains')->withExpression('tvt_gains', $tvt_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('tvt_gains')
+            $result = DB::table('tvt_gains')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -590,52 +605,70 @@ class TribeService
     private function tvt_losses(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the tribes that conquered the tribe's villages by number of conquers
+         * (one CTE row each):
+         *
          *   WITH tvt_losses AS
          *   (
          *       SELECT
-         *          ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *          nexttid AS "tid",
-         *          COUNT(*) AS "losses"
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           nexttid AS tid,
+         *           COUNT(*) AS losses
          *       FROM conquers
-         *       WHERE prevtid = $id
+         *       WHERE conquers.wid = :world AND prevtid = :id
          *       GROUP BY nexttid
-         *       ORDER BY "losses" DESC
+         *       ORDER BY losses DESC
          *   )
-         *   SELECT tvt_losses."num", tr.id, tr.name AS "name", tvt_losses."losses" FROM tvt_losses
-         *   INNER JOIN tribes AS tr ON tr.id = tvt_losses."tid"
+         *
+         * A separate "SELECT COUNT(*) FROM tvt_losses" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH tvt_losses AS (...)
+         *   SELECT tvt_losses.num AS num, tr.id AS id, tr.name AS name, tvt_losses.losses AS losses
+         *   FROM tvt_losses
+         *   INNER JOIN tribes AS tr ON tr.id = tid AND tr.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH tvt_losses AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(tvt_losses.losses) AS losses
+         *   FROM tvt_losses
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM tvt_losses WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
-        $tvt_losses = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $tvt_losses = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'nexttid AS tid',
-            DB::connection($world)->raw('COUNT(*) AS losses')
+            DB::raw('COUNT(*) AS losses')
         )->where('prevtid', '=', $id)
             ->groupBy('nexttid')
             ->orderBy('losses', 'DESC');
 
-        $best6 = DB::connection($world)->table('tvt_losses')
+        $best6 = DB::table('tvt_losses')
         ->select(
             'tvt_losses.num AS num',
             'tr.id AS id',
             'tr.name AS name',
             'tvt_losses.losses AS losses'
         )->withExpression('tvt_losses', $tvt_losses)
-            ->join('tribes AS tr', 'tr.id', '=', 'tid')
+            ->join('tribes AS tr', fn ($join) => $join->on('tr.id', '=', 'tid')->where('tr.wid', '=', $world))
             ->whereBetween('num', [1, 6]);
         
-        $total = DB::connection($world)->table('tvt_losses')->withExpression('tvt_losses', $tvt_losses)->count();
+        $total = DB::table('tvt_losses')->withExpression('tvt_losses', $tvt_losses)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('tvt_losses')
+            $result = DB::table('tvt_losses')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -658,51 +691,70 @@ class TribeService
     private function tvp_gains(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
-         * WITH tvp_gains AS
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the players the tribe conquered villages from by number of conquers
+         * (one CTE row each):
+         *
+         *   WITH tvp_gains AS
          *   (
          *       SELECT
-         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *           prevpid AS "pid",
-         *           COUNT(*) AS "gains"
-         *       WHERE nexttid = $id
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           prevpid AS pid,
+         *           COUNT(*) AS gains
+         *       FROM conquers
+         *       WHERE conquers.wid = :world AND nexttid = :id
          *       GROUP BY prevpid
-         *       ORDER BY "gains" DESC
+         *       ORDER BY gains DESC
          *   )
-         *   SELECT tvp_gains."num", pl.id, pl.name AS "name", tvp_gains."gains" FROM tvp_gains
-         *   INNER JOIN players AS pl ON pl.id = tvp_gains."pid"
+         *
+         * A separate "SELECT COUNT(*) FROM tvp_gains" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH tvp_gains AS (...)
+         *   SELECT tvp_gains.num AS num, pl.id AS id, pl.name AS name, tvp_gains.gains AS gains
+         *   FROM tvp_gains
+         *   INNER JOIN players AS pl ON pl.id = pid AND pl.wid = :world
          *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH tvp_gains AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(tvp_gains.gains) AS gains
+         *   FROM tvp_gains
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("gains") AS "gains" FROM tvp_gains WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
         
-        $tvp_gains = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $tvp_gains = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'prevpid AS pid',
-            DB::connection($world)->raw('COUNT(*) AS gains')
+            DB::raw('COUNT(*) AS gains')
         )->where('nexttid', '=', $id)
             ->groupBy('prevpid')
             ->orderBy('gains', 'DESC');
 
-        $best6 = DB::connection($world)->table('tvp_gains')
+        $best6 = DB::table('tvp_gains')
             ->select(
                 'tvp_gains.num AS num',
                 'pl.id AS id',
                 'pl.name AS name',
                 'tvp_gains.gains AS gains'
             )->withExpression('tvp_gains', $tvp_gains)
-                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->join('players AS pl', fn ($join) => $join->on('pl.id', '=', 'pid')->where('pl.wid', '=', $world))
                 ->whereBetween('num', [1, 6]);
         
-        $total = DB::connection($world)->table('tvp_gains')->withExpression('tvp_gains', $tvp_gains)->count();
+        $total = DB::table('tvp_gains')->withExpression('tvp_gains', $tvp_gains)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('tvp_gains')
+            $result = DB::table('tvp_gains')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -725,51 +777,70 @@ class TribeService
     private function tvp_losses(string $world, int $id)
     {
         /**
-         * Actual query we want to execute:
-         * WITH tvp_losses AS
+         * Actual queries we want to execute, with :world and :id the bound values.
+         * Ranks the players that conquered the tribe's villages by number of conquers
+         * (one CTE row each):
+         *
+         *   WITH tvp_losses AS
          *   (
          *       SELECT
-         *           ROW_NUMBER OVER (ORDER BY COUNT(*) DESC) AS "num",
-         *           nextpid AS "pid",
-         *           COUNT(*) AS "losses"
-         *       WHERE prevtid = $id
+         *           ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num,
+         *           nextpid AS pid,
+         *           COUNT(*) AS losses
+         *       FROM conquers
+         *       WHERE conquers.wid = :world AND prevtid = :id
          *       GROUP BY nextpid
-         *       ORDER BY "losses" DESC
+         *       ORDER BY losses DESC
          *   )
-         *   SELECT tvp_losses."num" AS "num", pl.id, pl.name AS "name", tvp_losses."losses" FROM tvp_losses
-         *   INNER JOIN players AS pl ON pl.id = tvp_losses."pid"
-         *   WHERE "num" BETWEEN 1 AND 6
+         *
+         * A separate "SELECT COUNT(*) FROM tvp_losses" (with the same CTE) gives the number of rows.
+         *
+         * With 6 rows or fewer, the best 6 are the result:
+         *   WITH tvp_losses AS (...)
+         *   SELECT tvp_losses.num AS num, pl.id AS id, pl.name AS name, tvp_losses.losses AS losses
+         *   FROM tvp_losses
+         *   INNER JOIN players AS pl ON pl.id = pid AND pl.wid = :world
+         *   WHERE num BETWEEN 1 AND 6
+         *   ORDER BY num;
+         *
+         * With more than 6, the remaining rows are summed into an "Other" row,
+         * used as the first UNION operand (each side has its own copy of the CTE).
+         * The final ORDER BY num puts "Other" after the best 6:
+         *   WITH tvp_losses AS (...)
+         *   SELECT 7 AS num, 0 AS id, 'Other' AS name, SUM(tvp_losses.losses) AS losses
+         *   FROM tvp_losses
+         *   WHERE num > 6
          *   UNION
-         *   SELECT 7, 'Other', SUM("losses") AS "losses" FROM tvp_losses WHERE num > 6
-         *   ORDER BY "num";
+         *   <the best 6 query above, without its ORDER BY>
+         *   ORDER BY num;
          */
 
-        $tvp_losses = Conquer::on($world)->select(
-            DB::connection($world)->raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
+        $tvp_losses = Conquer::where('conquers.wid', $world)->select(
+            DB::raw('ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS num'),
             'nextpid AS pid',
-            DB::connection($world)->raw('COUNT(*) AS losses')
+            DB::raw('COUNT(*) AS losses')
         )->where('prevtid', '=', $id)
             ->groupBy('nextpid')
             ->orderBy('losses', 'DESC');
         
-        $best6 = DB::connection($world)->table('tvp_losses')
+        $best6 = DB::table('tvp_losses')
             ->select(
                 'tvp_losses.num AS num',
                 'pl.id AS id',
                 'pl.name AS name',
                 'tvp_losses.losses AS losses'
             )->withExpression('tvp_losses', $tvp_losses)
-                ->join('players AS pl', 'pl.id', '=', 'pid')
+                ->join('players AS pl', fn ($join) => $join->on('pl.id', '=', 'pid')->where('pl.wid', '=', $world))
                 ->whereBetween('num', [1, 6]);
 
-        $total = DB::connection($world)->table('tvp_losses')->withExpression('tvp_losses', $tvp_losses)->count();
+        $total = DB::table('tvp_losses')->withExpression('tvp_losses', $tvp_losses)->count();
         if($total<=6)
             $result = $best6->orderBy('num');
         else
         {
-            $result = DB::connection($world)->table('tvp_losses')
+            $result = DB::table('tvp_losses')
                 ->select(
-                    DB::connection($world)->raw('
+                    DB::raw('
                         7 AS num,
                         0 AS id,
                         \'Other\' AS name,
@@ -791,7 +862,7 @@ class TribeService
      */
     public function name(string $world, int $id)
     {
-        $result = Tribe::on($world)->select('name')->where('id', '=', $id)->get()[0];
+        $result = Tribe::where('tribes.wid', $world)->select('name')->where('id', '=', $id)->get()[0];
         return array('name' => $result['name']);
     }
 }

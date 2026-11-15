@@ -1,0 +1,12 @@
+# All of the dumper's packages, pinned. The game's servers speak socket.io 2
+# (Engine.IO 3), which python-socketio only supports up to 4.x.
+certifi==2026.10.23
+charset-normalizer==3.5.2
+idna==3.20
+psycopg2-binary==2.9.13
+python-engineio==3.14.2
+python-socketio[client]==4.6.1
+requests==2.34.2
+six==1.17.0
+urllib3==2.8.0
+websocket-client==1.9.2

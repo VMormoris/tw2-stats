@@ -13,7 +13,7 @@ onMounted(()=>{
     const obj = resp['world'];
     const wcond = obj['win_condition'] === 'Domination' ? '' + obj['win_ammount'] + '% Domination' : '' + format(obj['win_ammount']) + ' VP';
     const start = new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
-    const end = obj['end'] === null ? 'TBA' : new Date(Date.parse(obj['start'])).toLocaleDateString('en-uk');
+    const end = obj['end'] === null ? 'TBA' : new Date(Date.parse(obj['end'])).toLocaleDateString('en-uk');
 
     //Update webpage
     info.value.push({ 'Players': format(obj['players']) });

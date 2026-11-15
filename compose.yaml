@@ -1,0 +1,7 @@
+# Development environment, defined in docker/compose.yaml. Its values come
+# from docker/.env, so the application's .env holds only Laravel settings.
+name: tw2-stats
+
+include:
+  - path: docker/compose.yaml
+    env_file: docker/.env

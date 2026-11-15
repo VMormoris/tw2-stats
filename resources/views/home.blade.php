@@ -33,11 +33,11 @@
                     </p>
                     
                     <div class="text-center">
-                        <a class="btn-rounded btn-custom-link" href="https://discord.gg/vxZbCrShaP" role="button">
+                        <a class="btn btn-custom-link rounded-pill" href="https://discord.gg/vxZbCrShaP" role="button">
                             Join our Chat
                             <i class="fa fa-discord-alt pl-2 fa-btn" aria-hidden="true"></i>
                         </a>
-                        <a class="btn-rounded btn-dark ml-5" href="https://github.com/VMormoris/tw2-stats" role="button">
+                        <a class="btn btn-dark rounded-pill ml-5" href="https://github.com/VMormoris/tw2-stats" role="button">
                             Source Code
                             <i class="fa fa-github pl-2 fa-btn" aria-hidden="true"></i>
                         </a>

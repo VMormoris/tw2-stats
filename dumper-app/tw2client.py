@@ -11,7 +11,6 @@ class tw2Client:
     '''
 
     #__TYPES = ['Login/success', 'Authentication/characterSelected', 'Map/villageData', 'Ranking/character', 'Ranking/tribe', 'System/error', 'System/welcome', 'GameGuard/getInfo']#List of accepted types
-    __sio = socketio.Client()#socket.io object
 
     def __init__(self, url: str = '', token: str=''):
         '''Initializes the client and calls connect on the specified url
@@ -19,6 +18,7 @@ class tw2Client:
         Parameters:
             url (str): String containing the url of the server that will be connecting to
         '''
+        self.__sio = socketio.Client()#socket.io object, one per client
         self.__id = 1
         self.__tokenEmit = token
         self.__callback = None
@@ -51,22 +51,20 @@ class tw2Client:
         })
         self.__id += 1
 
-    def connect(self, url: str):
+    def connect(self, url: str, deadline: float = float('inf')):
         '''Create a connection with the given tw2 - server
 
         Parameters: 
             url (str): String containing the url of the specified server
+            deadline (float): time.monotonic() after which it stops trying
         '''
-        flag = False
         self.__url = url
-        try:
-            self.__sio.connect(url, transports = ["websocket", "polling", "polling-jsonp", "polling-xhr"])
-            flag = True
-        except socketio.exceptions.ConnectionError:
-            time.sleep(60.0)
-        finally:
-            if not flag:
-                self.connect(url)
+        while time.monotonic() < deadline:
+            try:
+                self.__sio.connect(url, transports = ["websocket", "polling", "polling-jsonp", "polling-xhr"])
+                return
+            except socketio.exceptions.ConnectionError:
+                time.sleep(60.0)
 
     def disconnect(self):
         '''Disconects from the server that was last connected to
@@ -113,9 +111,9 @@ class tw2Client:
         '''
         self.__tokenEmit = token
 
-    def restart(self):
+    def restart(self, deadline: float = float('inf')):
         self.disconnect()
-        self.connect(self.__url)
+        self.connect(self.__url, deadline)
 
     def totalEmits(self):
         return self.__id - 1
