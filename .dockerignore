@@ -35,7 +35,6 @@ dumper-app/nohup.out
 # Local development configuration
 docker-compose.override.yml
 compose.override.yaml
-npm.yml
 Homestead.json
 Homestead.yaml
 .idea
