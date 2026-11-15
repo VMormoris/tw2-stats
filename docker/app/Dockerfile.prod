@@ -1,5 +1,7 @@
-# Production image: the code, its dependencies and the built assets are baked
-# in, so nothing is mounted from the checkout.
+# Production images, built from one context so the PHP code and the static
+# files match; nothing is mounted from the checkout:
+#   target app: PHP-FPM with the code, its dependencies and the Vite manifest
+#   target web: Nginx with the public files and the built assets
 FROM node:26 AS assets
 
 WORKDIR /build
@@ -9,29 +11,58 @@ COPY vite.config.js .
 COPY resources resources
 RUN npm run build
 
-FROM php:8.4-apache
+# The PHP extensions, compiled here so their -dev packages stay out of the app image
+FROM php:8.4-fpm AS php-build
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq-dev libzip-dev unzip \
-    && docker-php-ext-install bcmath pdo_pgsql zip \
-    && rm -rf /var/lib/apt/lists/* \
-    && a2enmod rewrite \
-    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+    && docker-php-ext-install bcmath pdo_pgsql zip
+
+# The code and its Composer dependencies, installed with the app's extensions
+FROM php-build AS vendor
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY docker/app/apache.conf /etc/apache2/sites-available/000-default.conf
-
 WORKDIR /var/www/tw2-stats
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction
-
 COPY . .
+# Also runs package:discover, which writes bootstrap/cache/packages.php and services.php
+RUN composer dump-autoload --optimize --no-dev
+
+FROM nginx:stable AS web
+
+COPY docker/web/nginx.conf /etc/nginx/nginx.conf
+COPY docker/web/default.conf /etc/nginx/conf.d/default.conf
+COPY public /var/www/tw2-stats/public
+COPY --from=assets /build/public/build /var/www/tw2-stats/public/build
+USER nginx
+
+FROM php:8.4-fpm AS app
+
+# The runtime libraries of the extensions; the base image's compilers and C
+# headers (libc-dev is installed as libc6-dev) are removed
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq5 libzip5 \
+    && apt-get purge -y --auto-remove $PHPIZE_DEPS libc6-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY --from=php-build /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+COPY --from=php-build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+COPY docker/app/php-fpm.conf /usr/local/etc/php-fpm.d/zz-tw2-stats.conf
+
+WORKDIR /var/www/tw2-stats
+COPY --from=vendor /var/www/tw2-stats .
+# @vite reads public/build/manifest.json
 COPY --from=assets /build/public/build public/build
-# The storage directories are left out of the build context, see .dockerignore
-RUN composer dump-autoload --optimize --no-dev \
-    && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
-    && chown -R www-data:www-data storage bootstrap/cache
+# The code stays root's; www-data writes only to storage (sessions, compiled
+# views, file cache). The storage directories are left out of the build
+# context, see .dockerignore
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
+    && chown -R www-data:www-data storage
 
 COPY docker/app/entrypoint.sh /usr/local/bin/
+# Where tinker (PsySH) keeps its files; www-data's home is the read-only /var/www
+ENV HOME=/tmp
+USER www-data
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["apache2-foreground"]
+CMD ["php-fpm"]

@@ -13,7 +13,8 @@ docker/dumper/accounts.json
 node_modules
 vendor
 
-# Laravel runtime files
+# Laravel runtime files; the image's caches are written at build or start
+bootstrap/cache/*.php
 public/hot
 public/storage
 storage/logs
@@ -34,6 +35,7 @@ dumper-app/nohup.out
 # Local development configuration
 docker-compose.override.yml
 compose.override.yaml
+npm.yml
 Homestead.json
 Homestead.yaml
 .idea
